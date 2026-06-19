@@ -317,6 +317,7 @@ code review torna-se mais lento.
 
 ## Deprecated API Usage
 
+
 **Descrição:**
 Uso de métodos, funções, classes ou configurações que foram marcados como deprecated nas versões
 recentes do framework ou da linguagem, ou que foram completamente removidos. Bloqueia upgrades e

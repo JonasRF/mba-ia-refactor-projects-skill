@@ -57,20 +57,36 @@ para a Fase 3. Nenhum arquivo do projeto deve ser criado ou modificado nesta fas
 
 ### Instruções de execução
 
-1. Leia o arquivo de referência `.claude/skills/refactor-arch/antipatterns-catalog.md`. Ele
-   contém os anti-patterns, sinais de detecção, exemplos de código e critérios de severidade
-   que devem ser aplicados.
+1. Leia o arquivo de referência `.claude/skills/refactor-arch/antipatterns-catalog.md` por
+   completo. Memorize todos os anti-patterns listados, seus IDs (AP-01, AP-02, …) e sinais de
+   detecção. O catálogo é a única fonte de verdade — não invente anti-patterns fora dele.
 
-2. Leia o arquivo de referência `.claude/skills/refactor-arch/template_audit_report.md`. Ele
-   define o formato exato do relatório a ser impresso, as regras de preenchimento de cada campo
-   e o bloco de confirmação que deve ser exibido ao final.
+2. Leia o arquivo de referência `.claude/skills/refactor-arch/template_audit_report.md` por
+   completo. Ele define o formato exato do relatório, as regras de preenchimento de cada campo
+   e o tamanho máximo do trecho de código (10 linhas).
 
-3. Escaneie todos os arquivos-fonte do projeto aplicando os sinais de detecção de cada
-   anti-pattern. Siga as regras de escopo da Seção 4 do `template_audit_report.md` (arquivos a
-   ignorar, ordem dos findings, tamanho do trecho de código).
+3. Leia **todos** os arquivos-fonte do projeto (excluindo `node_modules`, `.venv`, `venv`,
+   `__pycache__`, `.git`, `dist`, `build`, `reports`, `.claude`).
 
-5. Imprima o relatório completo no terminal seguindo **exatamente** o formato da Seção 2 do
-   `template_audit_report.md` e salve o relatório dentro da pasta reports com o seguinte nome audit-project-<N>.md.
+4. Para **cada anti-pattern do catálogo**, na ordem em que aparecem no arquivo, execute os
+   seguintes passos:
+   a. Aplique todos os seus sinais de detecção sobre cada arquivo-fonte lido no passo 3.
+   b. Se encontrar ao menos uma ocorrência: registre internamente como finding com
+      (severidade, ID, arquivo, linhas, trecho de código, problema, ação).
+   c. Se o mesmo anti-pattern ocorrer em múltiplos arquivos ou funções distintas com impactos
+      diferentes, registre um finding separado para cada ocorrência relevante.
+   d. Se não encontrar nenhuma ocorrência: não registre finding e siga para o próximo.
 
-6. Phase 2 complete. Proceed with refactoring (Phase 3)? [y/n]. Espere a resposta humana. Se ela não vier ou for negativa[n], encerre.
+5. Após varrer **todos** os anti-patterns do catálogo, compile a lista final de findings.
+   Conte os findings por severidade: CRITICAL, HIGH, MEDIUM, LOW. Esses números são os que
+   vão para o Executive Summary — preencha o Summary **somente depois** de ter a lista completa.
+
+6. Imprima o relatório no terminal e salve em `reports/audit-project-<N>.md`, onde `<N>` é o
+   próximo número sequencial disponível na pasta. Siga **exatamente** o formato do
+   `template_audit_report.md`: findings ordenados de CRITICAL → HIGH → MEDIUM → LOW; dentro
+   de cada nível, na ordem em que os anti-patterns aparecem no catálogo.
+
+7. Ao final do relatório impresso, exiba:
+   `Phase 2 complete. Proceed with refactoring (Phase 3)? [y/n]`
+   Aguarde a resposta humana. Se não vier ou for `n`, encerre.
 
