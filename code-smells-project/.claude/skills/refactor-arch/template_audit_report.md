@@ -3,6 +3,7 @@
 Imprima o relatório seguindo exatamente esta estrutura, substituindo os campos `< >` pelos
 valores encontrados na auditoria.
 
+```
 ================================
 ARCHITECTURE AUDIT REPORT
 ================================
@@ -69,3 +70,5 @@ Action  : <ação de refatoração recomendada>
 ================================================================
 Findings : <N total> 
 ================================================================
+
+```
