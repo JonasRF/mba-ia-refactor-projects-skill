@@ -12,3 +12,4 @@ python app.py
 ```
 
 A aplicação sobe em `http://localhost:5000`. O banco SQLite (`loja.db`) é criado automaticamente no primeiro boot, já com produtos e usuários de exemplo.
+

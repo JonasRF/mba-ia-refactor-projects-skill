@@ -43,9 +43,34 @@ Dependencies:  <dependências relevantes separadas por vírgula>
 Domain:        <domínio> (<entidades principais separadas por vírgula>)
 Architecture:  <classificação> — <descrição curta>
 Source files:  <N> files analyzed
-DB Engine:     <banco de dados>
-DB Access:     <ORM/ODM ou SQL direto>
 DB tables:     <tabelas ou coleções>
 ================================
 ```
+Quando terminar, vá para a Fase 2 imediatamente — sem perguntar.
+---
+
+## FASE 2 — AUDIT
+
+**Objetivo:** Cruzar todos os arquivos-fonte do projeto contra o catálogo de anti-patterns,
+gerar um relatório estruturado de auditoria e aguardar confirmação do usuário antes de avançar
+para a Fase 3. Nenhum arquivo do projeto deve ser criado ou modificado nesta fase.
+
+### Instruções de execução
+
+1. Leia o arquivo de referência `.claude/skills/refactor-arch/antipatterns-catalog.md`. Ele
+   contém os anti-patterns, sinais de detecção, exemplos de código e critérios de severidade
+   que devem ser aplicados.
+
+2. Leia o arquivo de referência `.claude/skills/refactor-arch/template_audit_report.md`. Ele
+   define o formato exato do relatório a ser impresso, as regras de preenchimento de cada campo
+   e o bloco de confirmação que deve ser exibido ao final.
+
+3. Escaneie todos os arquivos-fonte do projeto aplicando os sinais de detecção de cada
+   anti-pattern. Siga as regras de escopo da Seção 4 do `template_audit_report.md` (arquivos a
+   ignorar, ordem dos findings, tamanho do trecho de código).
+
+5. Imprima o relatório completo no terminal seguindo **exatamente** o formato da Seção 2 do
+   `template_audit_report.md` e salve o relatório dentro da pasta reports com o seguinte nome audit-project-<N>.md.
+
+6. Phase 2 complete. Proceed with refactoring (Phase 3)? [y/n]. Espere a resposta humana. Se ela não vier ou for negativa[n], encerre.
 
