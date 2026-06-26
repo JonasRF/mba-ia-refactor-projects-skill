@@ -90,3 +90,91 @@ para a Fase 3. Nenhum arquivo do projeto deve ser criado ou modificado nesta fas
    `Phase 2 complete. Proceed with refactoring (Phase 3)? [y/n]`
    Aguarde a resposta humana. Se não vier ou for `n`, encerre.
 
+---
+
+## FASE 3 — REFATORAÇÃO
+
+**Objetivo:** Transformar o código-fonte do projeto para o padrão MVC definido nos arquivos de
+referência, corrigindo todos os anti-patterns identificados na Fase 2. Ao final, validar que
+a aplicação inicializa sem erros e que todos os endpoints originais respondem corretamente.
+
+### Instruções de execução
+
+1. Leia o arquivo `.claude/skills/refactor-arch/architecture_guidelines.md` por completo. Ele
+   define a estrutura de diretórios alvo, as responsabilidades de cada camada (Model, Controller,
+   Routes/View, Database, Bootstrap) e o checklist de validação pós-refatoração. É a única fonte
+   de verdade sobre **onde** cada trecho de código deve ficar. Os exemplos estão em Python/Flask,
+   mas os princípios se aplicam à stack detectada na Fase 1 — adapte nomenclatura e convenções
+   conforme a linguagem e o framework do projeto.
+
+2. Leia o arquivo `.claude/skills/refactor-arch/refactoring-playbook.md` por completo. Ele define
+   os padrões concretos de transformação (PT-01 a PT-11) com código ANTES/DEPOIS e os passos
+   exatos de cada transformação. Aplique os padrões **na ordem recomendada** da seção
+   "Ordem de Aplicação Recomendada" do Playbook, adaptando a sintaxe e os idiomas à stack do
+   projeto sem alterar os princípios estruturais.
+
+3. Para cada anti-pattern listado no relatório da Fase 2 (CRITICAL → HIGH → MEDIUM → LOW),
+   aplique o padrão de transformação correspondente do Playbook. Não pule nenhum finding.
+
+4. Ao criar ou modificar arquivos, garanta que a estrutura de diretórios final respeita o
+   padrão MVC do `architecture_guidelines.md`, adaptado à convenção da stack detectada:
+   - **Entry point** — arquivo de bootstrap que inicializa a aplicação, registra rotas e
+     carrega configuração; não contém rotas nem lógica de negócio
+   - **Config** — módulo de configuração que lê variáveis de ambiente; zero valores
+     hardcoded no código-fonte
+   - **Models** — camada de acesso a dados; queries parametrizadas, serialização centralizada;
+     sem lógica de negócio
+   - **Controllers** — lógica de negócio e orquestração; sem conhecimento do protocolo HTTP
+   - **Routes/Views** — roteamento HTTP, parse de request, validação de presença e tipo de
+     campos, mapeamento de erros para status codes; sem acesso direto ao banco
+   - **Database** — gerenciamento do ciclo de vida da conexão, escopado por request
+   - **Services** — side-effects externos (notificações, filas, e-mail), se houver
+
+5. Após aplicar todas as transformações, execute mentalmente o checklist do
+   `architecture_guidelines.md`. Verifique cada item contra os arquivos produzidos. Se algum
+   item não estiver satisfeito, corrija antes de avançar para a validação.
+
+6. **Validação de boot:** determine o comando de inicialização correto para a stack detectada
+   na Fase 1 (ex: `node index.js`, `python app.py`, `go run main.go`, `mvn spring-boot:run`,
+   `rails server`) e execute-o. Capture e exiba as primeiras linhas do output. Se a aplicação
+   não subir, corrija o erro e repita até inicializar sem exceções ou erros fatais.
+
+7. **Validação de endpoints:** com a aplicação rodando, teste cada endpoint mapeado na Fase 1
+   usando a ferramenta de HTTP disponível no ambiente (`curl`, `httpie`, cliente nativo ou
+   equivalente). Para cada chamada, exiba: comando executado, status HTTP retornado e trecho
+   da resposta. Critérios mínimos de aceitação por tipo de operação:
+   - Health check ou rota raiz → `2xx`
+   - Listagem de recursos → `200` com coleção de dados
+   - Criação de recurso → `201` com identificador gerado
+   - Busca por identificador → `200` com objeto do recurso
+   - Autenticação/login, se existir → `200` com token ou sessão
+   - Criação de pedido/transação, se existir → `201` com registro criado
+
+8. Ao final, imprima o bloco de conclusão abaixo no terminal, preenchendo os campos `<>`:
+
+```
+================================
+PHASE 3: REFACTORING COMPLETE
+================================
+Stack:               <linguagem> / <framework>
+Patterns applied:    <IDs PT-XX aplicados, separados por vírgula>
+Files created:       <N> novos arquivos
+Files modified:      <N> arquivos modificados
+Files removed:       <N> arquivos removidos
+
+MVC Structure:       <OK | FAIL>
+Config extracted:    <OK | FAIL> — variáveis de ambiente, zero hardcoded
+Models layer:        <OK | FAIL> — queries parametrizadas, serialização centralizada
+Routes layer:        <OK | FAIL> — roteamento isolado, sem lógica de negócio
+Controllers layer:   <OK | FAIL> — regras de domínio isoladas, sem conhecimento HTTP
+Error handling:      <OK | FAIL> — erros mapeados para status HTTP na camada Routes
+Entry point:         <OK | FAIL> — bootstrap limpo, sem rotas nem lógica inline
+
+Boot test:           <OK | FAIL — detalhe do erro>
+Endpoints tested:    <N>/<total> passaram
+================================
+```
+
+Se `Boot test` ou qualquer endpoint crítico falhar, **não imprima o bloco de conclusão** —
+corrija o problema e repita os passos 6 e 7 até todos os testes passarem.
+
