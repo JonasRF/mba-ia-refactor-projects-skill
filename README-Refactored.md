@@ -378,7 +378,8 @@ http://localhost:5000/produtos/listar
 
 ```
 
-<img width="1095" height="901" alt="Produtos_listar" src="https://github.com/user-attachments/assets/7c7174e7-ac76-4ea6-bf23-cda20cd4cf8e" />
+<img width="1419" height="820" alt="Captura de tela de 2026-07-08 13-07-36" src="https://github.com/user-attachments/assets/cc32a97a-f0e2-4279-92cc-08f6e7e4f3ee" />
+
 
 
 ```
