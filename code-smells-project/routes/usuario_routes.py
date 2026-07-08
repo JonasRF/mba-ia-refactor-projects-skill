@@ -3,11 +3,9 @@ from controllers.usuario_controller import UsuarioController
 
 usuario_bp = Blueprint("usuarios", __name__, url_prefix="/usuarios")
 
-
-@usuario_bp.get("/")
+@usuario_bp.get("/listar")
 def listar_usuarios():
     return jsonify({"dados": UsuarioController.listar(), "sucesso": True}), 200
-
 
 @usuario_bp.get("/<int:usuario_id>")
 def buscar_usuario(usuario_id: int):
@@ -17,8 +15,7 @@ def buscar_usuario(usuario_id: int):
     except LookupError as e:
         return jsonify({"erro": str(e)}), 404
 
-
-@usuario_bp.post("/")
+@usuario_bp.post("/criar")
 def criar_usuario():
     dados = request.get_json(silent=True) or {}
     nome = dados.get("nome", "")

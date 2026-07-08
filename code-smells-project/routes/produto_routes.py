@@ -29,7 +29,7 @@ def _parse_float_param(valor, nome: str):
         raise ValueError(f"'{nome}' deve ser numérico, recebido: '{valor}'")
 
 
-@produto_bp.get("/")
+@produto_bp.get("/listar")
 def listar_produtos():
     return jsonify({"dados": ProdutoController.listar(), "sucesso": True}), 200
 
@@ -59,7 +59,6 @@ def buscar_produto(produto_id: int):
     except LookupError as e:
         return jsonify({"erro": str(e)}), 404
 
-
 @produto_bp.post("/criar")
 def criar_produto():
     dados = request.get_json(silent=True) or {}
@@ -72,7 +71,6 @@ def criar_produto():
     except (TypeError, ValueError) as e:
         return jsonify({"erro": str(e)}), 400
 
-
 @produto_bp.put("/<int:produto_id>")
 def atualizar_produto(produto_id: int):
     dados = request.get_json(silent=True) or {}
@@ -84,7 +82,6 @@ def atualizar_produto(produto_id: int):
         return jsonify({"erro": str(e)}), 404
     except (TypeError, ValueError) as e:
         return jsonify({"erro": str(e)}), 400
-
 
 @produto_bp.delete("/<int:produto_id>")
 def deletar_produto(produto_id: int):

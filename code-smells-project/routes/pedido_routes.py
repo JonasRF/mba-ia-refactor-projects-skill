@@ -4,8 +4,7 @@ from controllers.pedido_controller import PedidoController
 pedido_bp = Blueprint("pedidos", __name__, url_prefix="/pedidos")
 _controller = PedidoController()
 
-
-@pedido_bp.post("/")
+@pedido_bp.post("/criar")
 def criar_pedido():
     dados = request.get_json(silent=True) or {}
     try:
@@ -19,16 +18,13 @@ def criar_pedido():
     except ValueError as e:
         return jsonify({"erro": str(e)}), 400
 
-
-@pedido_bp.get("/")
+@pedido_bp.get("/listar")
 def listar_todos_pedidos():
     return jsonify({"dados": _controller.listar_todos(), "sucesso": True}), 200
-
 
 @pedido_bp.get("/usuario/<int:usuario_id>")
 def listar_pedidos_usuario(usuario_id: int):
     return jsonify({"dados": _controller.listar_por_usuario(usuario_id), "sucesso": True}), 200
-
 
 @pedido_bp.put("/<int:pedido_id>/status")
 def atualizar_status_pedido(pedido_id: int):

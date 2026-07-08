@@ -3,7 +3,6 @@ from controllers.system_controller import SystemController
 
 health_bp = Blueprint("health", __name__)
 
-
 @health_bp.get("/health")
 def health_check():
     try:
@@ -11,7 +10,6 @@ def health_check():
         return jsonify(resultado), 200
     except Exception:
         return jsonify({"status": "erro", "detalhes": "Erro interno"}), 500
-
 
 @health_bp.get("/")
 def index():

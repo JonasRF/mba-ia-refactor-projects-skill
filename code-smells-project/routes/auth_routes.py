@@ -3,7 +3,6 @@ from controllers.usuario_controller import UsuarioController
 
 auth_bp = Blueprint("auth", __name__)
 
-
 @auth_bp.post("/login")
 def login():
     dados = request.get_json(silent=True) or {}
