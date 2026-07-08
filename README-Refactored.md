@@ -353,7 +353,7 @@ http://localhost:5000/pedidos/criar (criar)
 
 ```
 
-<img width="1067" height="624" alt="pedidos" src="https://github.com/user-attachments/assets/c8ec478e-d281-431e-919b-8befa85aa6c3" />
+<img width="1419" height="820" alt="Captura de tela de 2026-07-08 13-09-43" src="https://github.com/user-attachments/assets/2fa65e5e-2cd9-4b61-9e5e-4f0a3a5e2075" />
 
 
 ```
