@@ -381,7 +381,6 @@ http://localhost:5000/produtos/listar
 <img width="1419" height="820" alt="Captura de tela de 2026-07-08 13-07-36" src="https://github.com/user-attachments/assets/cc32a97a-f0e2-4279-92cc-08f6e7e4f3ee" />
 
 
-
 ```
 
 http://localhost:5000/relatorios/vendas
@@ -394,6 +393,43 @@ http://localhost:5000/relatorios/vendas
 
 
 #### Projeto 2 — ecommerce-api-legacy
+
+```
+
+http://localhost:3000/api/checkout
+
+```
+
+<img width="1448" height="561" alt="Captura de tela de 2026-07-08 17-53-00" src="https://github.com/user-attachments/assets/6851a78b-7173-45f3-84d8-73849614633d" />
+
+```
+
+http://localhost:3000/health
+
+```
+
+<img width="1448" height="561" alt="Captura de tela de 2026-07-08 17-58-14" src="https://github.com/user-attachments/assets/39eb082b-bd55-40d3-a3bb-b126da0da482" />
+
+```
+
+http://localhost:3000/api/admin/financial-report
+
+```
+
+<img width="1444" height="827" alt="Captura de tela de 2026-07-08 18-02-36" src="https://github.com/user-attachments/assets/0d6de911-6580-420c-824a-f051269e0df8" />
+
+```
+
+http://localhost:3000/api/users/1
+
+```
+
+<img width="1444" height="827" alt="Captura de tela de 2026-07-08 18-17-14" src="https://github.com/user-attachments/assets/1400c64a-8617-49a7-8483-dffadfd10f26" />
+
+<img width="1480" height="103" alt="Captura de tela de 2026-07-08 18-17-47" src="https://github.com/user-attachments/assets/7cdb5ab6-db5e-4100-87b5-7dc19c539392" />
+
+#### Projeto 3 — `task-manager-api`
+
 
 
 
