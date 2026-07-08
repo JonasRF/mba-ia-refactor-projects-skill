@@ -390,6 +390,8 @@ http://localhost:5000/relatorios/vendas
 <img width="1430" height="572" alt="Captura de tela de 2026-07-08 13-04-41" src="https://github.com/user-attachments/assets/42e74bd2-0c2c-4b6d-a4f7-0c78274ec53f" />
 
 
+####Projeto 2 — ecommerce-api-legacy
+
 
 ### Observações sobre comportamento da skill em stacks diferentes
 
