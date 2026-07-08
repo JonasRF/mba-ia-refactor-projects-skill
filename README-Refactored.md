@@ -338,6 +338,58 @@ task-manager-api/
 - [x] Aplicação inicia sem erros
 - [x] Endpoints originais respondem corretamente
 
+###Screenshots das aplicações rodando após a refatoração
+
+#### Projeto 1 — `code-smells-project`
+
+```
+http://localhost:5000/health
+
+```
+<img width="1086" height="645" alt="health" src="https://github.com/user-attachments/assets/26965e6d-32d2-4b16-b5d5-e2bad8e0411c" />
+
+```
+http://localhost:5000/pedidos/criar (criar)
+
+```
+
+<img width="1067" height="624" alt="pedidos" src="https://github.com/user-attachments/assets/c8ec478e-d281-431e-919b-8befa85aa6c3" />
+
+
+```
+
+http://localhost:5000/pedidos/listar (listar)
+
+```
+<img width="1419" height="820" alt="Captura de tela de 2026-07-08 13-07-36" src="https://github.com/user-attachments/assets/a7fa173b-74a4-4a3b-8a51-b6548a0a48a7" />
+
+
+```
+
+http://localhost:5000/produtos/criar
+
+```
+
+<img width="1430" height="572" alt="Captura de tela de 2026-07-08 12-36-26" src="https://github.com/user-attachments/assets/c1e251a1-c4cf-4032-b765-6512f729e69b" />
+
+```
+
+http://localhost:5000/produtos/listar
+
+```
+
+<img width="1095" height="901" alt="Produtos_listar" src="https://github.com/user-attachments/assets/7c7174e7-ac76-4ea6-bf23-cda20cd4cf8e" />
+
+
+```
+
+http://localhost:5000/relatorios/vendas
+
+```
+<img width="1430" height="572" alt="Captura de tela de 2026-07-08 13-04-41" src="https://github.com/user-attachments/assets/42e74bd2-0c2c-4b6d-a4f7-0c78274ec53f" />
+
+
+
 ### Observações sobre comportamento da skill em stacks diferentes
 
 - **Python/Flask (Projeto 1 — monolito)**: a skill identificou corretamente todos os anti-patterns de um arquivo único. A Fase 3 criou toda a estrutura MVC do zero, incluindo a extração de 4 arquivos em ~15 módulos.
