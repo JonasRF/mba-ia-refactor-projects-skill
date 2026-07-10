@@ -430,7 +430,113 @@ http://localhost:3000/api/users/1
 
 #### Projeto 3 — `task-manager-api`
 
+```
 
+http://localhost:5000/categories
+
+```
+
+<img width="1430" height="889" alt="Categorias" src="https://github.com/user-attachments/assets/d663342c-b468-49a4-9458-d4a531394069" />
+
+
+```
+
+http://localhost:5000/categories/create
+
+```
+
+<img width="1431" height="540" alt="categorias create" src="https://github.com/user-attachments/assets/ffbfbf57-4404-44fb-94f5-795d5397212a" />
+
+
+```
+
+http://localhost:5000/health
+
+```
+
+<img width="1411" height="430" alt="health task-manager" src="https://github.com/user-attachments/assets/7e62e68d-675f-45d8-86a2-6c92b11d0c46" />
+
+```
+
+http://localhost:5000/reports/summary
+
+```
+
+<img width="1432" height="901" alt="reports summary" src="https://github.com/user-attachments/assets/f66d2893-9f34-42d4-9cc1-4152b281f347" />
+
+```
+
+http://localhost:5000/reports/users/2
+
+```
+
+<img width="1355" height="582" alt="reports user" src="https://github.com/user-attachments/assets/84078f85-df2c-455e-95fb-70a6c4606c7e" />
+
+```
+
+http://localhost:5000/tasks
+
+```
+
+<img width="1427" height="896" alt="tasks" src="https://github.com/user-attachments/assets/720df328-5d5f-4c10-8b9c-cee80cec968f" />
+
+```
+
+http://localhost:5000/tasks/2
+
+```
+
+<img width="1426" height="603" alt="task search" src="https://github.com/user-attachments/assets/603555d8-5406-4798-99d0-54da0e2fcf0d" />
+
+```
+
+http://localhost:5000/tasks/search?status=pending
+
+```
+
+<img width="1433" height="903" alt="tasks status" src="https://github.com/user-attachments/assets/3c5718d8-4399-40c8-99d7-8a48e4b79ab9" />
+
+```
+
+http://localhost:5000/tasks/search?priority=2
+
+```
+
+<img width="1425" height="903" alt="task priority" src="https://github.com/user-attachments/assets/a4de63c0-90ce-44d6-952d-5728ebd46b6e" />
+
+```
+
+http://localhost:5000/tasks/stats
+
+```
+
+<img width="1426" height="570" alt="task stats" src="https://github.com/user-attachments/assets/3ef01731-c57a-40d4-9987-0be2a689c184" />
+
+
+```
+
+http://localhost:5000/tasks/create
+
+```
+
+<img width="1433" height="842" alt="tasks create" src="https://github.com/user-attachments/assets/b2d67815-ef41-4bc9-9956-1c6820e97fc7" />
+
+
+```
+
+http://localhost:5000/tasks/11
+
+```
+
+<img width="1428" height="889" alt="tasks put" src="https://github.com/user-attachments/assets/5978aae3-711b-4c6d-a5fd-62249f7cdc38" />
+
+```
+
+http://localhost:5000/users
+
+```
+
+<img width="1408" height="770" alt="users" src="https://github.com/user-attachments/assets/72a43201-70e4-49ec-9085-70aca2ac369e" />
 
 
 ### Observações sobre comportamento da skill em stacks diferentes
