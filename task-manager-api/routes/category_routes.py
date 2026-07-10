@@ -9,7 +9,7 @@ def get_categories():
     return jsonify(CategoryController.get_all()), 200
 
 
-@category_bp.route('/categories', methods=['POST'])
+@category_bp.route('/categories/create', methods=['POST'])
 def create_category():
     data = request.get_json(silent=True)
     if not data:

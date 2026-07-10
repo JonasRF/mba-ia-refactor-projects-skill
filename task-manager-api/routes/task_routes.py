@@ -60,7 +60,7 @@ def get_task(task_id):
         return jsonify({'error': str(e)}), 404
 
 
-@task_bp.route('/tasks', methods=['POST'])
+@task_bp.route('/tasks/create', methods=['POST'])
 def create_task():
     data = request.get_json(silent=True)
     if not data:
