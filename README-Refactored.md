@@ -538,6 +538,8 @@ http://localhost:5000/users
 
 <img width="1408" height="770" alt="users" src="https://github.com/user-attachments/assets/72a43201-70e4-49ec-9085-70aca2ac369e" />
 
+<img width="1234" height="327" alt="image" src="https://github.com/user-attachments/assets/804d4c73-55be-4e35-815d-bbd701f8e0e8" />
+
 
 ### Observações sobre comportamento da skill em stacks diferentes
 
