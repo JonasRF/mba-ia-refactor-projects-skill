@@ -3,11 +3,15 @@ from models.user import User
 from models.task import Task
 from controllers.exceptions import ConflictError
 from sqlalchemy.orm import joinedload
+from datetime import datetime, timedelta, timezone
+from flask import current_app
 import re
+import jwt
 
 VALID_ROLES = frozenset(['user', 'admin', 'manager'])
 EMAIL_REGEX = re.compile(r'^[a-zA-Z0-9+_.-]+@[a-zA-Z0-9.-]+$')
 MIN_PASSWORD_LEN = 4
+JWT_EXPIRATION = timedelta(hours=8)
 
 
 class UserController:
@@ -102,8 +106,15 @@ class UserController:
             raise PermissionError('Credenciais inválidas')
         if not user.active:
             raise PermissionError('Usuário inativo')
+
+        payload = {
+            'sub': user.id,
+            'role': user.role,
+            'exp': datetime.now(timezone.utc) + JWT_EXPIRATION,
+        }
+        token = jwt.encode(payload, current_app.config['SECRET_KEY'], algorithm='HS256')
         return {
             'message': 'Login realizado com sucesso',
             'user': user.to_dict(),
-            'token': f'placeholder-{user.id}',
+            'token': token,
         }
