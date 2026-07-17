@@ -387,4 +387,4 @@ class UserController:
         }
 ```
 
-*Total de findings: 18*
+*Total de findings: 17*
