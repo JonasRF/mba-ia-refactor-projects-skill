@@ -79,17 +79,6 @@ self.email_password = 'senha123'
 
 ---
 
-### 🔴 [CRITICAL] AP-02c — Fake Token e Password Hash Exposto na Response
-
-**Arquivo:** `routes/user_routes.py` · Linhas 207–210
-
-```python
-return jsonify({
-    'message': 'Login realizado com sucesso',
-    'user':    user.to_dict(),
-    'token':   'fake-jwt-token-' + str(user.id)
-}), 200
-```
 
 **Problema:** Token de autenticação fake e previsível gerado com prefixo literal + user ID. Além disso, `user.to_dict()` inclui o campo `password` (hash MD5) na resposta da API, expondo credenciais ao cliente. MD5 é inseguro para hash de senha.
 
