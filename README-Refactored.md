@@ -133,7 +133,7 @@ A Fase 2 inicialmente gerava findings com descrições genéricas. Solução: o 
 
 | Projeto | Stack | Arquivos analisados | CRITICAL | HIGH | MEDIUM | LOW | Total |
 |---------|-------|---------------------|----------|------|--------|-----|-------|
-| `code-smells-project` | Python/Flask 3.1.1 | 4 (~781 linhas) | 7 | 5 | 6 | 4 | **22** |
+| `code-smells-project` | Python/Flask 3.1.1 | 4 (~781 linhas) | 8 | 5 | 6 | 4 | **23** |
 | `ecommerce-api-legacy` | Node.js/Express 4.18.2 | 7 (~180 linhas) | 2 | 4 | 3 | 2 | **11** |
 | `task-manager-api` | Python/Flask 3.0.0 | 15 (~1161 linhas) | 4 | 3 | 7 | 2 | **16** |
 
