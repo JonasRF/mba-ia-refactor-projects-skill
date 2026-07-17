@@ -659,3 +659,33 @@ id = models.criar_usuario(nome, email, senha)
 Renomear para `produto_id` e `usuario_id` respectivamente — mais descritivo e sem shadowing de built-in.
 
 ---
+
+### 🔴 AP-14 — Fake or Predictable Authentication Token
+
+| | |
+|---|---|
+| **File** | `routes/auth_routes.py` |
+| **Lines** | 56, 160 |
+
+```python
+    dados = request.get_json(silent=True) or {}
+    email = dados.get("email", "")
+    senha = dados.get("senha", "")
+    try:
+        usuario = UsuarioController.autenticar(email, senha)
+        return jsonify({"dados": usuario, "sucesso": True, "mensagem": "Login OK"}), 200
+    except ValueError as e:
+        return jsonify({"erro": str(e)}), 400
+    except PermissionError as e:
+        return jsonify({"erro": str(e), "sucesso": False}), 401
+```
+        
+**Problem**
+
+O login não emite token algum — nem fake, nem assinado. `UsuarioController.autenticar`(controllers/usuario_controller.py:25-31) apenas retorna o dict do usuário em caso de sucesso. Nenhuma dependência de geração segura (`jwt`, `secrets.token_*`) é usada, enenhuma rota da aplicação (produtos, pedidos, usuários, relatórios) exige ou valida um header `Authorization`. Consequência: não existe autenticação real no sistema — qualquer cliente acessa e modifica qualquer recurso (criar/atualizar/deletar produtos, criar pedidos, listar usuários) sem se autenticar, e a resposta de "login OK" não estabelece nenhuma sessão verificável.
+
+**Recommended Action**
+
+Aplicar PT-13 do playbook — gerar um token assinado e expirável (JWT com `SECRET_KEY` do`app.config`, claims `sub`/`role`/`exp`) no login, e criar um decorator/middleware de autenticação que valide o header `Authorization` nas rotas que devem ser protegidas (ex.: criação/alteração de produtos e pedidos), retornando 401 quando ausente ou inválido.
+
+----------------------------------------------------------------
