@@ -343,6 +343,14 @@ task-manager-api/
 #### Projeto 1 — `code-smells-project`
 
 ```
+http://localhost:5000/login
+
+```
+
+<img width="1079" height="569" alt="image" src="https://github.com/user-attachments/assets/653fe1a0-2fb3-4bfb-94b6-9be8a158f8d3" />
+
+
+```
 http://localhost:5000/health
 
 ```
