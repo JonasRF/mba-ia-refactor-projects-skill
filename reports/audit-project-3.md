@@ -13,11 +13,11 @@
 
 | Severidade   | Total |
 |--------------|-------|
-| 🔴 Critical  | 6     |
+| 🔴 Critical  | 5     |
 | 🟠 High      | 3     |
 | 🟡 Medium    | 7     |
 | 🔵 Low       | 2     |
-| **Total**    | **18**|
+| **Total**    | **17**|
 
 ---
 
