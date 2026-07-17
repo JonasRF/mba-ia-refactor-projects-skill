@@ -13,11 +13,11 @@
 
 | Severidade   | Total |
 |--------------|-------|
-| 🔴 Critical  | 4     |
+| 🔴 Critical  | 6     |
 | 🟠 High      | 3     |
 | 🟡 Medium    | 7     |
 | 🔵 Low       | 2     |
-| **Total**    | **16**|
+| **Total**    | **18**|
 
 ---
 
@@ -369,4 +369,33 @@ p5 = Task.query.filter_by(priority=5).count()
 
 ---
 
-*Total de findings: 16*
+### 🔴 AP-13 — Weak / Reversible Password Hashing
+
+```python
+class User(db.Model):
+ def to_dict(self):
+        }
+    def set_password(self, pwd):
+        self.password = hashlib.md5(pwd.encode()).hexdigest()
+
+    def check_password(self, pwd):
+        return self.password == hashlib.md5(pwd.encode()).hexdigest()
+```
+
+
+### 🔴 AP-14 — Fake or Predictable Authentication Token
+
+```python
+class UserController:
+ def login(email: str, password: str) -> dict:
+            raise PermissionError('Credenciais inválidas')
+        if not user.active:
+            raise PermissionError('Usuário inativo')
+        return {
+            'message': 'Login realizado com sucesso',
+            'user': user.to_dict(),
+            'token': f'placeholder-{user.id}',
+        }
+```
+
+*Total de findings: 18*
