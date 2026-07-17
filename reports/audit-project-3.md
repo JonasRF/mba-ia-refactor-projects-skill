@@ -358,7 +358,7 @@ p5 = Task.query.filter_by(priority=5).count()
 
 ---
 
-### 🔴 AP-13 — Weak / Reversible Password Hashing
+### 🔴 [CRITICAL] AP-13 — Weak / Reversible Password Hashing
 
 ```python
 class User(db.Model):
@@ -372,7 +372,7 @@ class User(db.Model):
 ```
 
 
-### 🔴 AP-14 — Fake or Predictable Authentication Token
+### 🔴 [CRITICAL] AP-14 — Fake or Predictable Authentication Token
 
 ```python
 class UserController:
