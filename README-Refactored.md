@@ -135,7 +135,7 @@ A Fase 2 inicialmente gerava findings com descrições genéricas. Solução: o 
 |---------|-------|---------------------|----------|------|--------|-----|-------|
 | `code-smells-project` | Python/Flask 3.1.1 | 4 (~781 linhas) | 8 | 5 | 6 | 4 | **23** |
 | `ecommerce-api-legacy` | Node.js/Express 4.18.2 | 7 (~180 linhas) | 2 | 4 | 3 | 2 | **11** |
-| `task-manager-api` | Python/Flask 3.0.0 | 15 (~1161 linhas) | 4 | 3 | 7 | 2 | **16** |
+| `task-manager-api` | Python/Flask 3.0.0 | 15 (~1161 linhas) | 5 | 3 | 7 | 2 | **17** |
 
 ### Comparação antes/depois
 
