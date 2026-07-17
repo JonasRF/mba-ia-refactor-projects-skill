@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from controllers.produto_controller import ProdutoController
+from routes.auth_middleware import require_auth
 
 produto_bp = Blueprint("produtos", __name__, url_prefix="/produtos")
 
@@ -60,6 +61,7 @@ def buscar_produto(produto_id: int):
         return jsonify({"erro": str(e)}), 404
 
 @produto_bp.post("/criar")
+@require_auth
 def criar_produto():
     dados = request.get_json(silent=True) or {}
     try:
@@ -72,6 +74,7 @@ def criar_produto():
         return jsonify({"erro": str(e)}), 400
 
 @produto_bp.put("/<int:produto_id>")
+@require_auth
 def atualizar_produto(produto_id: int):
     dados = request.get_json(silent=True) or {}
     try:
@@ -84,6 +87,7 @@ def atualizar_produto(produto_id: int):
         return jsonify({"erro": str(e)}), 400
 
 @produto_bp.delete("/<int:produto_id>")
+@require_auth
 def deletar_produto(produto_id: int):
     try:
         ProdutoController.deletar(produto_id)

@@ -1,4 +1,10 @@
+import os
+from datetime import datetime, timedelta, timezone
+
+import jwt
+
 from models.usuario import UsuarioModel
+from controllers.constants import JWT_ALGORITHM, JWT_EXPIRATION_HORAS
 
 
 class UsuarioController:
@@ -28,4 +34,10 @@ class UsuarioController:
         usuario = UsuarioModel.autenticar(email, senha)
         if not usuario:
             raise PermissionError("Email ou senha inválidos")
-        return usuario
+        payload = {
+            "sub": usuario["id"],
+            "role": usuario["tipo"],
+            "exp": datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRATION_HORAS),
+        }
+        token = jwt.encode(payload, os.environ["SECRET_KEY"], algorithm=JWT_ALGORITHM)
+        return {"usuario": usuario, "token": token}

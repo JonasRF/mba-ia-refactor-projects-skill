@@ -923,3 +923,173 @@ quebra ao atualizar o framework mesmo com bump de versão minor; comportamento s
 diferente entre versões.
 
 ---
+
+## AP-13 — Weak / Reversible Password Hashing
+
+**Severidade:** `CRITICAL`
+
+**Descrição:**
+Senhas de usuário são armazenadas com um algoritmo de hash rápido e sem salt (MD5, SHA-1, SHA-256
+puro) em vez de uma função de derivação de chave projetada para senhas (bcrypt, scrypt, Argon2,
+PBKDF2). Hashes rápidos são otimizados para velocidade, não para resistência a força bruta — um
+vazamento do banco permite recuperar a maioria das senhas em minutos com hardware comum (GPU,
+rainbow tables). Este anti-pattern é distinto de AP-02: não há credencial exposta em texto puro no
+código-fonte, o problema é o algoritmo criptográfico usado para proteger a senha armazenada.
+
+**Sinais de detecção (agnósticos):**
+
+| Sinal | Heurística geral |
+|-------|------------------|
+| Hash de senha com algoritmo genérico rápido | `hashlib.md5`/`hashlib.sha1`/`hashlib.sha256` aplicado a senha, sem lib dedicada |
+| Comparação manual de hash com `==` | `self.password == hash(pwd)` em vez de função de verificação com tempo constante |
+| Ausência de salt explícito ou automático | Hash calculado apenas sobre o valor da senha, sem sal por usuário |
+| Ausência de lib de hashing de senha nas dependências | Nenhum `bcrypt`, `argon2`, `passlib`, `werkzeug.security` no `requirements`/`package.json`/`pom.xml`/`go.mod` |
+| Método `set_password`/`check_password`/`hash_password` reimplementado manualmente | Reimplementação própria de hashing em vez de biblioteca auditada |
+
+**Exemplos por stack:**
+
+```python
+# Python — RUIM
+import hashlib
+
+def set_password(self, pwd):
+    self.password = hashlib.md5(pwd.encode()).hexdigest()
+
+def check_password(self, pwd):
+    return self.password == hashlib.md5(pwd.encode()).hexdigest()
+
+# Python — BOM
+from werkzeug.security import generate_password_hash, check_password_hash
+
+def set_password(self, pwd):
+    self.password = generate_password_hash(pwd)
+
+def check_password(self, pwd):
+    return check_password_hash(self.password, pwd)
+```
+
+```javascript
+// Node.js — RUIM
+const crypto = require('crypto');
+const hash = crypto.createHash('md5').update(senha).digest('hex');
+
+// Node.js — BOM
+const bcrypt = require('bcrypt');
+const hash = await bcrypt.hash(senha, 12);
+const valido = await bcrypt.compare(senha, hash);
+```
+
+```java
+// Java — RUIM
+MessageDigest md = MessageDigest.getInstance("MD5");
+byte[] hash = md.digest(senha.getBytes());
+
+// Java — BOM (Spring Security)
+PasswordEncoder encoder = new BCryptPasswordEncoder();
+String hash = encoder.encode(senha);
+boolean valido = encoder.matches(senha, hash);
+```
+
+```go
+// Go — RUIM
+h := md5.Sum([]byte(senha))
+hash := hex.EncodeToString(h[:])
+
+// Go — BOM
+import "golang.org/x/crypto/bcrypt"
+hash, _ := bcrypt.GenerateFromPassword([]byte(senha), bcrypt.DefaultCost)
+err := bcrypt.CompareHashAndPassword(hash, []byte(senha))
+```
+
+**Regex de busca (multi-linguagem):**
+```
+hashlib\.(md5|sha1|sha256)\(.*?(pwd|password|senha)
+createHash\((['"])(md5|sha1|sha256)\1\).*?(password|senha)
+MessageDigest\.getInstance\(["'](MD5|SHA-1|SHA-256)["']\)
+md5\.Sum\(|sha1\.Sum\(|sha256\.Sum256\(
+```
+
+**Impacto:** Vazamento do banco expõe a maioria das senhas em minutos via rainbow tables ou força
+bruta em GPU; reuso de senha por usuários compromete outras contas/serviços; violação direta de
+OWASP ASVS, LGPD e PCI-DSS.
+
+---
+
+## AP-14 — Fake or Predictable Authentication Token
+
+**Severidade:** `CRITICAL`
+
+**Descrição:**
+O endpoint de login/autenticação devolve um "token" que não é criptograficamente gerado nem
+verificável — construído por concatenação/interpolação de um dado previsível (ID do usuário,
+contador, timestamp) em vez de um JWT assinado ou um identificador de sessão aleatório. Como o
+valor é previsível e nenhuma rota valida assinatura ou existência real da sessão, qualquer cliente
+consegue forjar acesso a qualquer conta apenas conhecendo (ou adivinhando) o ID do usuário.
+
+**Sinais de detecção (agnósticos):**
+
+| Sinal | Heurística geral |
+|-------|------------------|
+| Token construído por f-string/concatenação com ID | `f'token-{user.id}'`, `'session_' + str(id)`, `"Bearer:" + email` |
+| Ausência de biblioteca de assinatura/geração segura | Nenhum `jwt`/`jsonwebtoken`/`jjwt`/`golang-jwt`, nenhum `secrets.token_*`/`crypto.randomBytes`/`SecureRandom` |
+| Token sem expiração | Payload/valor de token sem campo `exp` ou TTL associado |
+| Nenhuma verificação de token nas rotas protegidas | Rotas que deveriam exigir autenticação não decodificam nem validam o header `Authorization` |
+| Token igual ou derivável a partir de dado público do usuário | Valor do token reconstruível apenas sabendo o ID/email, sem segredo do servidor |
+
+**Exemplos por stack:**
+
+```python
+# Python — RUIM
+return {"token": f"placeholder-{user.id}"}
+
+# Python — BOM
+import jwt, os
+payload = {"sub": user.id, "role": user.role,
+           "exp": datetime.now(timezone.utc) + timedelta(hours=8)}
+token = jwt.encode(payload, os.environ["SECRET_KEY"], algorithm="HS256")
+return {"token": token}
+```
+
+```javascript
+// Node.js — RUIM
+res.json({ token: `token-${user.id}` });
+
+// Node.js — BOM
+const jwt = require('jsonwebtoken');
+const token = jwt.sign({ sub: user.id, role: user.role }, process.env.SECRET_KEY, { expiresIn: '8h' });
+res.json({ token });
+```
+
+```java
+// Java — RUIM
+String token = "session-" + usuario.getId();
+
+// Java — BOM (jjwt)
+String token = Jwts.builder()
+    .setSubject(String.valueOf(usuario.getId()))
+    .setExpiration(Date.from(Instant.now().plus(8, ChronoUnit.HOURS)))
+    .signWith(Keys.hmacShaKeyFor(secretKeyBytes))
+    .compact();
+```
+
+```go
+// Go — RUIM
+token := fmt.Sprintf("token-%d", usuario.ID)
+
+// Go — BOM
+claims := jwt.MapClaims{"sub": usuario.ID, "exp": time.Now().Add(8 * time.Hour).Unix()}
+token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+signed, _ := token.SignedString([]byte(os.Getenv("SECRET_KEY")))
+```
+
+**Regex de busca (multi-linguagem):**
+```
+token['"]?\s*[:=]\s*f?["'].*?\{.*?\.(id|user_id|email)
+token['"]?\s*[:=]\s*["'].*?\+\s*(str\(|String\.valueOf\(|Sprintf).*?(id|Id|ID)
+```
+
+**Impacto:** Bypass completo de autenticação — qualquer atacante calcula ou adivinha o token de
+qualquer usuário; nenhuma expiração ou revogação possível; comprometimento total de contas e dados
+protegidos por login.
+
+---

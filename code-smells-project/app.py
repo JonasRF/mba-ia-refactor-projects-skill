@@ -17,6 +17,7 @@ def create_app(config=None):
     secret_key = os.environ.get("SECRET_KEY")
     if not secret_key:
         secret_key = secrets.token_hex(32)
+        os.environ["SECRET_KEY"] = secret_key
         print("WARNING: SECRET_KEY not set — using generated key. Set SECRET_KEY env var for production.")
     app.config["SECRET_KEY"] = secret_key
     app.config["DATABASE"] = os.environ.get("DATABASE_PATH", "loja.db")

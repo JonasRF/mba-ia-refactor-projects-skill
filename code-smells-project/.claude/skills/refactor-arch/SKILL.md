@@ -108,13 +108,22 @@ a aplicação inicializa sem erros e que todos os endpoints originais respondem 
    conforme a linguagem e o framework do projeto.
 
 2. Leia o arquivo `.claude/skills/refactor-arch/refactoring-playbook.md` por completo. Ele define
-   os padrões concretos de transformação (PT-01 a PT-11) com código ANTES/DEPOIS e os passos
-   exatos de cada transformação. Aplique os padrões **na ordem recomendada** da seção
-   "Ordem de Aplicação Recomendada" do Playbook, adaptando a sintaxe e os idiomas à stack do
-   projeto sem alterar os princípios estruturais.
+   os padrões concretos de transformação (PT-01 a PT-13) com código ANTES/DEPOIS e os passos
+   exatos de cada transformação — incluindo PT-12 (hash de senha seguro) e PT-13 (autenticação
+   real com token assinado/expirável), que corrigem as causas raiz de senha em hash fraco e token
+   fake/previsível. Aplique os padrões **na ordem recomendada** da seção "Ordem de Aplicação
+   Recomendada" do Playbook, adaptando a sintaxe e os idiomas à stack do projeto sem alterar os
+   princípios estruturais.
 
 3. Para cada anti-pattern listado no relatório da Fase 2 (CRITICAL → HIGH → MEDIUM → LOW),
    aplique o padrão de transformação correspondente do Playbook. Não pule nenhum finding.
+   a. **Todo finding CRITICAL é obrigatório e bloqueante.** Nenhum finding CRITICAL do relatório
+      da Fase 2 pode permanecer sem correção ao final da Fase 3.
+   b. Se um finding CRITICAL foi registrado na Fase 2 sob um AP-ID que não cobre a causa raiz real
+      do problema (ex.: hash fraco de senha ou token previsível registrados sob AP-02 por
+      aproximação), identifique a categoria de segurança correta e aplique o padrão do Playbook
+      mais específico para ela — não considere o finding resolvido só porque o AP-ID original foi
+      tratado.
 
 4. Ao criar ou modificar arquivos, garanta que a estrutura de diretórios final respeita o
    padrão MVC do `architecture_guidelines.md`, adaptado à convenção da stack detectada:
@@ -134,12 +143,21 @@ a aplicação inicializa sem erros e que todos os endpoints originais respondem 
    `architecture_guidelines.md`. Verifique cada item contra os arquivos produzidos. Se algum
    item não estiver satisfeito, corrija antes de avançar para a validação.
 
-6. **Validação de boot:** determine o comando de inicialização correto para a stack detectada
+6. **Gate de findings CRITICAL:** releia a lista de findings CRITICAL registrados no relatório da
+   Fase 2. Para cada um, confirme nos arquivos finais que o sinal de detecção original do
+   anti-pattern (a heurística/regex do `antipatterns-catalog.md`) não ocorre mais — por exemplo,
+   busque por `hashlib.md5`, `hashlib.sha1`, tokens construídos por f-string/concatenação com ID,
+   segredos literais, concatenação de SQL. Monte a contagem `<N resolvidos>/<N total>` de findings
+   CRITICAL. Se qualquer um ainda estiver presente, a Fase 3 **não está completa**: volte ao passo
+   3, aplique o padrão do Playbook faltante e repita este gate. Não prossiga para a validação de
+   boot enquanto houver CRITICAL não resolvido.
+
+7. **Validação de boot:** determine o comando de inicialização correto para a stack detectada
    na Fase 1 (ex: `node index.js`, `python app.py`, `go run main.go`, `mvn spring-boot:run`,
    `rails server`) e execute-o. Capture e exiba as primeiras linhas do output. Se a aplicação
    não subir, corrija o erro e repita até inicializar sem exceções ou erros fatais.
 
-7. **Validação de endpoints:** com a aplicação rodando, teste cada endpoint mapeado na Fase 1
+8. **Validação de endpoints:** com a aplicação rodando, teste cada endpoint mapeado na Fase 1
    usando a ferramenta de HTTP disponível no ambiente (`curl`, `httpie`, cliente nativo ou
    equivalente). Para cada chamada, exiba: comando executado, status HTTP retornado e trecho
    da resposta. Critérios mínimos de aceitação por tipo de operação:
@@ -147,10 +165,12 @@ a aplicação inicializa sem erros e que todos os endpoints originais respondem 
    - Listagem de recursos → `200` com coleção de dados
    - Criação de recurso → `201` com identificador gerado
    - Busca por identificador → `200` com objeto do recurso
-   - Autenticação/login, se existir → `200` com token ou sessão
+   - Autenticação/login, se existir → `200` com token real (JWT/sessão assinada, nunca valor
+     previsível) — valide também que uma rota protegida rejeita requests sem token ou com token
+     inválido (`401`)
    - Criação de pedido/transação, se existir → `201` com registro criado
 
-8. Ao final, imprima o bloco de conclusão abaixo no terminal, preenchendo os campos `<>`:
+9. Ao final, imprima o bloco de conclusão abaixo no terminal, preenchendo os campos `<>`:
 
 ```
 ================================
@@ -172,9 +192,11 @@ Entry point:         <OK | FAIL> — bootstrap limpo, sem rotas nem lógica inli
 
 Boot test:           <OK | FAIL — detalhe do erro>
 Endpoints tested:    <N>/<total> passaram
+CRITICAL findings:   <N resolvidos>/<N total> — 0 pendentes exigido
 ================================
 ```
 
-Se `Boot test` ou qualquer endpoint crítico falhar, **não imprima o bloco de conclusão** —
-corrija o problema e repita os passos 6 e 7 até todos os testes passarem.
+Se `Boot test`, qualquer endpoint crítico, ou o gate de findings CRITICAL falhar, **não imprima o
+bloco de conclusão** —
+corrija o problema e repita os passos 6, 7 e 8 até todos os testes e o gate CRITICAL passarem.
 

@@ -1,13 +1,16 @@
 from flask import Blueprint, request, jsonify
 from controllers.usuario_controller import UsuarioController
+from routes.auth_middleware import require_auth, require_admin
 
 usuario_bp = Blueprint("usuarios", __name__, url_prefix="/usuarios")
 
 @usuario_bp.get("/listar")
+@require_admin
 def listar_usuarios():
     return jsonify({"dados": UsuarioController.listar(), "sucesso": True}), 200
 
 @usuario_bp.get("/<int:usuario_id>")
+@require_admin
 def buscar_usuario(usuario_id: int):
     try:
         usuario = UsuarioController.buscar(usuario_id)
@@ -16,6 +19,7 @@ def buscar_usuario(usuario_id: int):
         return jsonify({"erro": str(e)}), 404
 
 @usuario_bp.post("/criar")
+@require_auth
 def criar_usuario():
     dados = request.get_json(silent=True) or {}
     nome = dados.get("nome", "")

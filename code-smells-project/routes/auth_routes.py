@@ -9,8 +9,8 @@ def login():
     email = dados.get("email", "")
     senha = dados.get("senha", "")
     try:
-        usuario = UsuarioController.autenticar(email, senha)
-        return jsonify({"dados": usuario, "sucesso": True, "mensagem": "Login OK"}), 200
+        resultado = UsuarioController.autenticar(email, senha)
+        return jsonify({"dados": resultado, "sucesso": True, "mensagem": "Login OK"}), 200
     except ValueError as e:
         return jsonify({"erro": str(e)}), 400
     except PermissionError as e:
