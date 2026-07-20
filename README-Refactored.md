@@ -402,6 +402,17 @@ http://localhost:5000/relatorios/vendas
 
 #### Projeto 2 — ecommerce-api-legacy
 
+
+```
+
+http://localhost:3000/api/login
+
+```
+
+
+<img width="1413" height="486" alt="login ecommerce-api" src="https://github.com/user-attachments/assets/66a4f036-5be9-46d9-a49f-1f63bd164d97" />
+
+
 ```
 
 http://localhost:3000/api/checkout
@@ -424,17 +435,23 @@ http://localhost:3000/api/admin/financial-report
 
 ```
 
-<img width="1444" height="827" alt="Captura de tela de 2026-07-08 18-02-36" src="https://github.com/user-attachments/assets/0d6de911-6580-420c-824a-f051269e0df8" />
+<img width="1411" height="405" alt="Acesso restrito" src="https://github.com/user-attachments/assets/6f12dc02-874e-4416-91e9-f46bf693873e" />
+
+<img width="1420" height="653" alt="Acesso admin" src="https://github.com/user-attachments/assets/ac037c7e-1af7-46d7-b3b3-989db3ffa1a8" />
+
 
 ```
 
-http://localhost:3000/api/users/1
+http://localhost:3000/api/users/2
 
 ```
 
 <img width="1444" height="827" alt="Captura de tela de 2026-07-08 18-17-14" src="https://github.com/user-attachments/assets/1400c64a-8617-49a7-8483-dffadfd10f26" />
 
 <img width="1480" height="103" alt="Captura de tela de 2026-07-08 18-17-47" src="https://github.com/user-attachments/assets/7cdb5ab6-db5e-4100-87b5-7dc19c539392" />
+
+<img width="1408" height="383" alt="deletando usuario" src="https://github.com/user-attachments/assets/f793f345-1679-4593-b7c9-33bfef754fd2" />
+
 
 #### Projeto 3 — `task-manager-api`
 
