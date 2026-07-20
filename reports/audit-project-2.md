@@ -100,7 +100,7 @@ if (!user) {
         email,
         password: password || '123456',
     });
----
+```
 
 **Problem**
 
@@ -109,12 +109,11 @@ acesse a conta assim que existir um endpoint de login.
 
 **Recommended Action**
 
-Tornar a senha obrigatória no payload de checkout (rejeitar com 400 se ausente) ou, caso se deseje permitir onboarding sem senha, gerar uma senha aleatória forte por usuário (ex: `crypto.randomBytes(16).toString('hex')`) e comunicá-la por canal seguro — nunca usar
-constante fixa.
+Tornar a senha obrigatória no payload de checkout (rejeitar com 400 se ausente) ou, caso se deseje permitir onboarding sem senha, gerar uma senha aleatória forte por usuário (ex: `crypto.randomBytes(16).toString('hex')`) e comunicá-la por canal seguro — nunca usar constante fixa.
 
 ---
 
-### 🟠 `AP-04a` — Fat Controller — Checkout
+ ### 🟠 `AP-04a` — Fat Controller — Checkout
 
 | | |
 |---|---|
