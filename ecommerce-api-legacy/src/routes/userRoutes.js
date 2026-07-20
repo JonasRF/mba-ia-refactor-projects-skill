@@ -1,19 +1,22 @@
 const { Router } = require('express');
 const UserController = require('../controllers/userController');
+const { requireAdmin } = require('../middleware/authMiddleware');
+const { ValidationError } = require('../errors/domainErrors');
+const { HTTP_STATUS } = require('../constants/httpStatus');
 
 const router = Router();
 
-router.delete('/users/:userId', async (req, res) => {
+router.delete('/users/:userId', requireAdmin, async (req, res, next) => {
     const userId = parseInt(req.params.userId, 10);
     if (isNaN(userId) || userId <= 0) {
-        return res.status(400).json({ error: 'userId deve ser um número inteiro positivo' });
+        return next(new ValidationError('userId deve ser um número inteiro positivo'));
     }
 
     try {
         const result = await UserController.deleteUser(userId);
-        return res.status(200).json({ msg: 'Usuário deletado', deleted: result.deleted });
+        return res.status(HTTP_STATUS.OK).json({ msg: 'Usuário deletado', deleted: result.deleted });
     } catch (err) {
-        return res.status(500).json({ error: 'Erro ao deletar usuário' });
+        return next(err);
     }
 });
 

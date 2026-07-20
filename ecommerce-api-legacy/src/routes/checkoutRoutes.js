@@ -1,40 +1,33 @@
 const { Router } = require('express');
 const CheckoutController = require('../controllers/checkoutController');
+const { ValidationError } = require('../errors/domainErrors');
+const { HTTP_STATUS } = require('../constants/httpStatus');
+const { requireAuth } = require('../middleware/authMiddleware');
 
 const router = Router();
 
 function parseCheckoutBody(body) {
-    const { usr: userName, eml: email, pwd: password, c_id: courseId, card: cardNumber } = body;
+    const { userName, email, password, courseId, cardNumber } = body;
 
     if (!userName || !email || !courseId || !cardNumber) {
-        const err = new Error('Campos obrigatórios ausentes: usr, eml, c_id, card');
-        err.status = 400;
-        throw err;
+        throw new ValidationError('Campos obrigatórios ausentes: userName, email, courseId, cardNumber');
     }
 
     const parsedCourseId = parseInt(courseId, 10);
     if (isNaN(parsedCourseId) || parsedCourseId <= 0) {
-        const err = new Error('c_id deve ser um número inteiro positivo');
-        err.status = 400;
-        throw err;
+        throw new ValidationError('courseId deve ser um número inteiro positivo');
     }
 
     return { userName, email, password: password || '', courseId: parsedCourseId, cardNumber };
 }
 
-router.post('/checkout', async (req, res) => {
-    let parsed;
+router.post('/checkout', requireAuth, async (req, res, next) => {
     try {
-        parsed = parseCheckoutBody(req.body || {});
-    } catch (err) {
-        return res.status(err.status || 400).json({ error: err.message });
-    }
-
-    try {
+        const parsed = parseCheckoutBody(req.body || {});
         const result = await CheckoutController.checkout(parsed);
-        return res.status(201).json({ msg: 'Sucesso', enrollment_id: result.enrollmentId });
+        return res.status(HTTP_STATUS.CREATED).json({ msg: 'Sucesso', enrollment_id: result.enrollmentId });
     } catch (err) {
-        return res.status(err.status || 500).json({ error: err.message });
+        return next(err);
     }
 });
 

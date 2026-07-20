@@ -29,6 +29,8 @@ trecho de código é a camada correta.
 | [PT-09](#pt-09--code-duplication--dry-extraction) | AP-09 Code Duplication | MEDIUM | Extrair funções e schemas reutilizáveis |
 | [PT-10](#pt-10--magic-numbers--named-constants) | AP-10 Magic Numbers/Strings | LOW | Substituir por constantes nomeadas |
 | [PT-11](#pt-11--poor-naming--semantic-rename) | AP-11 Poor Naming | LOW | Renomear para nomes semânticos |
+| [PT-12](#pt-12--weak-password-hashing--secure-password-hashing) | AP-12 Weak Password Hashing | CRITICAL | Substituir MD5/SHA por bcrypt/PBKDF2 com salt |
+| [PT-13](#pt-13--fake-token--real-authentication) | AP-13 Fake Authentication Token | CRITICAL | Substituir token previsível por JWT/sessão assinada |
 
 ---
 
@@ -210,7 +212,9 @@ def health_check():
 1. Criar `.env.example` com todas as variáveis necessárias (sem valores reais).
 2. Adicionar `.env` ao `.gitignore`.
 3. Substituir toda string literal de credencial por `os.environ["VAR"]`.
-4. Instalar `bcrypt` (`pip install bcrypt`) e hashar senhas no seed.
+4. Instalar `bcrypt` (`pip install bcrypt`) e hashar senhas no seed. **Este passo cobre apenas o
+   seed inicial** — se o Model já tiver métodos próprios de `set_password`/`check_password` usando
+   hash fraco (MD5/SHA), isso é AP-13 e deve ser corrigido com **PT-12**, não com este padrão.
 5. Remover qualquer campo sensível (`secret_key`, `db_path`, `debug`) das respostas de API.
 6. Verificar no histórico git se alguma credencial real já foi comitada — se sim, rotacionar.
 
@@ -1070,6 +1074,172 @@ def atualizar(produto_id: int, nome: str, descricao: str,
 
 ---
 
+## PT-12 — Weak Password Hashing → Secure Password Hashing
+
+**Anti-pattern:** AP-13 · **Severidade:** CRITICAL
+**Trigger:** `set_password`/`check_password` (ou equivalente) usa `hashlib.md5`, `hashlib.sha1`,
+`hashlib.sha256` puro, ou qualquer algoritmo de hash genérico/rápido aplicado a senha.
+
+### ANTES
+
+```python
+# models/user.py
+import hashlib
+
+class User(db.Model):
+    ...
+    def set_password(self, pwd):
+        self.password = hashlib.md5(pwd.encode()).hexdigest()
+
+    def check_password(self, pwd):
+        return self.password == hashlib.md5(pwd.encode()).hexdigest()
+```
+
+### DEPOIS
+
+```python
+# models/user.py
+from werkzeug.security import generate_password_hash, check_password_hash
+
+class User(db.Model):
+    ...
+    password = db.Column(db.String(255), nullable=False)  # hash bcrypt/PBKDF2 é mais longo que MD5
+
+    def set_password(self, pwd):
+        self.password = generate_password_hash(pwd)   # salt automático, custo configurável
+
+    def check_password(self, pwd):
+        return check_password_hash(self.password, pwd)
+```
+
+### Passos de transformação
+
+1. Localizar toda função `set_password`/`check_password`/`hash_password` que usa `hashlib.md5`,
+   `hashlib.sha1` ou comparação direta (`==`) de hash de senha.
+2. Substituir por uma biblioteca de hashing de senha com salt automático e custo ajustável:
+   `werkzeug.security` (já é dependência transitiva do Flask), `bcrypt` ou `argon2-cffi`.
+3. Conferir que a coluna `password` no Model comporta o tamanho do novo hash (bcrypt/PBKDF2 geram
+   strings mais longas que o hex de 32 caracteres do MD5).
+4. Se já existirem senhas com hash antigo (produção ou seed), planejar rehash: no próximo login
+   bem-sucedido, recalcular o hash com o novo algoritmo (migração lazy), ou resetar as senhas —
+   nunca deixe os dois formatos de hash em uso sem uma rotina que os diferencie.
+5. Atualizar `seed.py`/fixtures para chamar `set_password()` em vez de hashar manualmente.
+6. Em outras stacks: `BCryptPasswordEncoder` (Java/Spring Security), `bcrypt.hash()` (Node.js),
+   `golang.org/x/crypto/bcrypt` (Go).
+
+### Checklist
+
+- [ ] Zero ocorrências de `hashlib.md5`/`hashlib.sha1`/`hashlib.sha256` aplicadas a senha
+- [ ] `set_password` usa função com salt automático e custo configurável (bcrypt/scrypt/argon2/PBKDF2)
+- [ ] `check_password` usa a função de verificação correspondente — nunca recomputa e compara com `==`
+- [ ] Seed/fixtures de usuários chamam a mesma função de hash da aplicação
+
+---
+
+## PT-13 — Fake Token → Real Authentication
+
+**Anti-pattern:** AP-14 · **Severidade:** CRITICAL
+**Trigger:** endpoint de login retorna token construído por f-string/concatenação com ID do
+usuário ou outro dado previsível; nenhuma rota valida o token recebido.
+
+### ANTES
+
+```python
+# controllers/user_controller.py
+@staticmethod
+def login(email, password):
+    user = User.query.filter_by(email=email).first()
+    if not user or not user.check_password(password):
+        raise PermissionError('Credenciais inválidas')
+    return {
+        'message': 'Login realizado com sucesso',
+        'user': user.to_dict(),
+        'token': f'placeholder-{user.id}',   # previsível — qualquer ID forja acesso
+    }
+```
+
+### DEPOIS
+
+```python
+# controllers/user_controller.py
+import os
+import jwt
+from datetime import datetime, timedelta, timezone
+
+JWT_EXPIRATION = timedelta(hours=8)
+
+class UserController:
+    @staticmethod
+    def login(email, password):
+        user = User.query.filter_by(email=email).first()
+        if not user or not user.check_password(password):
+            raise PermissionError('Credenciais inválidas')
+        if not user.active:
+            raise PermissionError('Usuário inativo')
+
+        payload = {
+            'sub': user.id,
+            'role': user.role,
+            'exp': datetime.now(timezone.utc) + JWT_EXPIRATION,
+        }
+        token = jwt.encode(payload, os.environ['SECRET_KEY'], algorithm='HS256')
+        return {
+            'message': 'Login realizado com sucesso',
+            'user': user.to_dict(),
+            'token': token,
+        }
+```
+
+```python
+# routes/auth_middleware.py — validação real do token nas rotas protegidas
+import os
+import jwt
+from functools import wraps
+from flask import request, jsonify
+
+def require_auth(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        header = request.headers.get('Authorization', '')
+        if not header.startswith('Bearer '):
+            return jsonify({'erro': 'Token ausente'}), 401
+        token = header.removeprefix('Bearer ')
+        try:
+            payload = jwt.decode(token, os.environ['SECRET_KEY'], algorithms=['HS256'])
+        except jwt.ExpiredSignatureError:
+            return jsonify({'erro': 'Token expirado'}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({'erro': 'Token inválido'}), 401
+        request.user_id = payload['sub']
+        return f(*args, **kwargs)
+    return wrapper
+```
+
+### Passos de transformação
+
+1. Localizar todo endpoint de login/autenticação cujo token seja construído por f-string,
+   concatenação ou qualquer valor derivável a partir de dado público do usuário (ID, email).
+2. Substituir por token assinado — `PyJWT`/`jsonwebtoken`/`jjwt`/`golang-jwt` — usando a
+   `SECRET_KEY` já externalizada em variável de ambiente por **PT-02**. Para sessão tradicional
+   (sem JWT), usar `secrets.token_urlsafe(32)` armazenado server-side com expiração.
+3. Incluir expiração (`exp`) no payload — nunca emitir token sem validade.
+4. Criar middleware/decorator que valida assinatura e expiração em toda rota que exige
+   autenticação; requests sem token válido devem retornar `401`.
+5. Aplicar o middleware a todas as rotas que dependiam apenas da presença de um "token" (perfil do
+   usuário autenticado, criação/edição de recursos sensíveis, rotas administrativas).
+6. Nunca aceitar como token um valor igual, ou reconstruível, a partir do ID/email do usuário.
+
+### Checklist
+
+- [ ] Zero ocorrências de `f'...{user.id}'`, `'token-' + str(id)` ou equivalente como valor de token
+- [ ] Token gerado com biblioteca de assinatura (JWT) ou gerador criptográfico (`secrets`,
+      `crypto.randomBytes`) — nunca string previsível
+- [ ] Token contém expiração (`exp`) e é validado em toda rota protegida
+- [ ] Middleware/decorator de autenticação real existe e está aplicado às rotas que antes aceitavam
+      qualquer string como token
+
+---
+
 ## Ordem de Aplicação Recomendada
 
 Aplicar os padrões nesta sequência minimiza retrabalho — cada etapa cria a base para a próxima:
@@ -1077,7 +1247,11 @@ Aplicar os padrões nesta sequência minimiza retrabalho — cada etapa cria a b
 ```
 PT-06 (conexão por request)     → fundação para todos os Models
      ↓
-PT-02 (env vars + senha hash)   → segurança antes de qualquer outra mudança
+PT-02 (env vars + secrets)      → segurança antes de qualquer outra mudança
+     ↓
+PT-12 (hash de senha seguro)    → corrige o algoritmo de hashing no Model de usuário
+     ↓
+PT-13 (autenticação real)       → substitui token fake por JWT/sessão assinada
      ↓
 PT-03 (SQL injection)           → corrige queries no código existente
      ↓

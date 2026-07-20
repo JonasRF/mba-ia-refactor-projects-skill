@@ -4,25 +4,19 @@ const EnrollmentModel  = require('../models/enrollmentModel');
 const PaymentModel     = require('../models/paymentModel');
 const AuditModel       = require('../models/auditModel');
 const { VISA_PREFIX, PAYMENT_STATUS } = require('./constants');
-
-function domainError(message, status) {
-    const err = new Error(message);
-    err.status = status;
-    return err;
-}
+const { ValidationError, NotFoundError, PaymentDeniedError } = require('../errors/domainErrors');
 
 const CheckoutController = {
     async checkout({ userName, email, password, courseId, cardNumber }) {
         const course = await CourseModel.findById(courseId);
-        if (!course) throw domainError('Curso não encontrado', 404);
+        if (!course) throw new NotFoundError('Curso não encontrado');
 
         let user = await UserModel.findByEmail(email);
         if (!user) {
-            const newUserId = await UserModel.create({
-                name: userName,
-                email,
-                password: password || '123456',
-            });
+            if (!password) {
+                throw new ValidationError('password é obrigatório para criar uma nova conta');
+            }
+            const newUserId = await UserModel.create({ name: userName, email, password });
             user = { id: newUserId };
         }
 
@@ -31,7 +25,7 @@ const CheckoutController = {
             : PAYMENT_STATUS.DENIED;
 
         if (paymentStatus === PAYMENT_STATUS.DENIED) {
-            throw domainError('Pagamento recusado', 400);
+            throw new PaymentDeniedError('Pagamento recusado');
         }
 
         const enrollmentId = await EnrollmentModel.create({ userId: user.id, courseId });

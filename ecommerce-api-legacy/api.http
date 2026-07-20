@@ -1,15 +1,27 @@
 @baseUrl = http://localhost:3000
 
-### Checkout - sucesso
+### Health check
+GET {{baseUrl}}/health
+
+### Login (admin seed)
+POST {{baseUrl}}/api/login
+Content-Type: application/json
+
+{
+  "email": "leonan@fullcycle.com.br",
+  "password": "123"
+}
+
+### Checkout - sucesso (novo usuário)
 POST {{baseUrl}}/api/checkout
 Content-Type: application/json
 
 {
-  "usr": "Guilherme",
-  "eml": "gui@fullcycle.com.br",
-  "pwd": "senhaforte",
-  "c_id": 2,
-  "card": "4111222233334444"
+  "userName": "Guilherme",
+  "email": "gui@fullcycle.com.br",
+  "password": "senhaforte",
+  "courseId": 2,
+  "cardNumber": "4111222233334444"
 }
 
 ### Checkout - pagamento recusado
@@ -17,15 +29,23 @@ POST {{baseUrl}}/api/checkout
 Content-Type: application/json
 
 {
-  "usr": "João",
-  "eml": "joao@teste.com",
-  "pwd": "123",
-  "c_id": 1,
-  "card": "5111222233334444"
+  "userName": "João",
+  "email": "joao@teste.com",
+  "password": "senhaforte",
+  "courseId": 1,
+  "cardNumber": "5111222233334444"
 }
 
-### Relatório financeiro administrativo
+### Relatório financeiro administrativo - sem token (esperado 401)
 GET {{baseUrl}}/api/admin/financial-report
 
-### Deletar usuário
+### Relatório financeiro administrativo - com token de admin
+GET {{baseUrl}}/api/admin/financial-report
+Authorization: Bearer {{token}}
+
+### Deletar usuário - sem token (esperado 401)
 DELETE {{baseUrl}}/api/users/1
+
+### Deletar usuário - com token de admin
+DELETE {{baseUrl}}/api/users/1
+Authorization: Bearer {{token}}
