@@ -440,6 +440,15 @@ http://localhost:3000/api/users/1
 
 ```
 
+http://localhost:5000/reports/summary
+
+```
+
+<img width="1079" height="570" alt="Login task-manager" src="https://github.com/user-attachments/assets/a020b039-88fd-4b62-864e-11bbc7d47726" />
+
+
+```
+
 http://localhost:5000/categories
 
 ```
@@ -470,7 +479,8 @@ http://localhost:5000/reports/summary
 
 ```
 
-<img width="1432" height="901" alt="reports summary" src="https://github.com/user-attachments/assets/f66d2893-9f34-42d4-9cc1-4152b281f347" />
+<img width="1405" height="866" alt="summary" src="https://github.com/user-attachments/assets/72e7b855-bc83-43c5-9a2f-7b21590ef56a" />
+
 
 ```
 
