@@ -446,11 +446,12 @@ http://localhost:3000/api/users/2
 
 ```
 
-<img width="1444" height="827" alt="Captura de tela de 2026-07-08 18-17-14" src="https://github.com/user-attachments/assets/1400c64a-8617-49a7-8483-dffadfd10f26" />
-
 <img width="1480" height="103" alt="Captura de tela de 2026-07-08 18-17-47" src="https://github.com/user-attachments/assets/7cdb5ab6-db5e-4100-87b5-7dc19c539392" />
 
+
+
 <img width="1408" height="383" alt="deletando usuario" src="https://github.com/user-attachments/assets/f793f345-1679-4593-b7c9-33bfef754fd2" />
+
 
 
 #### Projeto 3 — `task-manager-api`
