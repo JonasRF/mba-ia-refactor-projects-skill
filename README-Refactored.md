@@ -462,7 +462,7 @@ http://localhost:5000/categories/create
 
 ```
 
-<img width="1431" height="540" alt="categorias create" src="https://github.com/user-attachments/assets/ffbfbf57-4404-44fb-94f5-795d5397212a" />
+<img width="1410" height="491" alt="image" src="https://github.com/user-attachments/assets/123791f0-b73a-48c2-a76b-f70e83d5608b" />
 
 
 ```
