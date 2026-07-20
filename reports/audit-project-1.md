@@ -15,11 +15,11 @@ This report presents the findings of a static architecture review of the `code-s
 
 | Severity | Count | Status |
 |:---|:---:|:---|
-| 🔴 CRITICAL | 7 | Open |
+| 🔴 CRITICAL | 8 | Open |
 | 🟠 HIGH | 5 | Open |
 | 🟡 MEDIUM | 6 | Open |
 | 🟢 LOW | 4 | Open |
-| **Total** | **22** | |
+| **Total** | **23** | |
 
 ---
 

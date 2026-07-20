@@ -13,11 +13,11 @@
 
 | Severidade   | Total |
 |--------------|-------|
-| 🔴 Critical  | 4     |
+| 🔴 Critical  | 5     |
 | 🟠 High      | 3     |
 | 🟡 Medium    | 7     |
 | 🔵 Low       | 2     |
-| **Total**    | **16**|
+| **Total**    | **17**|
 
 ---
 
@@ -79,17 +79,6 @@ self.email_password = 'senha123'
 
 ---
 
-### 🔴 [CRITICAL] AP-02c — Fake Token e Password Hash Exposto na Response
-
-**Arquivo:** `routes/user_routes.py` · Linhas 207–210
-
-```python
-return jsonify({
-    'message': 'Login realizado com sucesso',
-    'user':    user.to_dict(),
-    'token':   'fake-jwt-token-' + str(user.id)
-}), 200
-```
 
 **Problema:** Token de autenticação fake e previsível gerado com prefixo literal + user ID. Além disso, `user.to_dict()` inclui o campo `password` (hash MD5) na resposta da API, expondo credenciais ao cliente. MD5 é inseguro para hash de senha.
 
@@ -369,4 +358,33 @@ p5 = Task.query.filter_by(priority=5).count()
 
 ---
 
-*Total de findings: 16*
+### 🔴 [CRITICAL] AP-13 — Weak / Reversible Password Hashing
+
+```python
+class User(db.Model):
+ def to_dict(self):
+        }
+    def set_password(self, pwd):
+        self.password = hashlib.md5(pwd.encode()).hexdigest()
+
+    def check_password(self, pwd):
+        return self.password == hashlib.md5(pwd.encode()).hexdigest()
+```
+
+
+### 🔴 [CRITICAL] AP-14 — Fake or Predictable Authentication Token
+
+```python
+class UserController:
+ def login(email: str, password: str) -> dict:
+            raise PermissionError('Credenciais inválidas')
+        if not user.active:
+            raise PermissionError('Usuário inativo')
+        return {
+            'message': 'Login realizado com sucesso',
+            'user': user.to_dict(),
+            'token': f'placeholder-{user.id}',
+        }
+```
+
+*Total de findings: 17*

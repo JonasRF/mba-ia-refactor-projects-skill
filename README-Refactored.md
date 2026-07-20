@@ -133,9 +133,9 @@ A Fase 2 inicialmente gerava findings com descrições genéricas. Solução: o 
 
 | Projeto | Stack | Arquivos analisados | CRITICAL | HIGH | MEDIUM | LOW | Total |
 |---------|-------|---------------------|----------|------|--------|-----|-------|
-| `code-smells-project` | Python/Flask 3.1.1 | 4 (~781 linhas) | 7 | 5 | 6 | 4 | **22** |
+| `code-smells-project` | Python/Flask 3.1.1 | 4 (~781 linhas) | 8 | 5 | 6 | 4 | **23** |
 | `ecommerce-api-legacy` | Node.js/Express 4.18.2 | 7 (~180 linhas) | 2 | 4 | 3 | 2 | **11** |
-| `task-manager-api` | Python/Flask 3.0.0 | 15 (~1161 linhas) | 4 | 3 | 7 | 2 | **16** |
+| `task-manager-api` | Python/Flask 3.0.0 | 15 (~1161 linhas) | 5 | 3 | 7 | 2 | **17** |
 
 ### Comparação antes/depois
 
@@ -343,6 +343,14 @@ task-manager-api/
 #### Projeto 1 — `code-smells-project`
 
 ```
+http://localhost:5000/login
+
+```
+
+<img width="1079" height="569" alt="image" src="https://github.com/user-attachments/assets/653fe1a0-2fb3-4bfb-94b6-9be8a158f8d3" />
+
+
+```
 http://localhost:5000/health
 
 ```
@@ -394,6 +402,17 @@ http://localhost:5000/relatorios/vendas
 
 #### Projeto 2 — ecommerce-api-legacy
 
+
+```
+
+http://localhost:3000/api/login
+
+```
+
+
+<img width="1413" height="486" alt="login ecommerce-api" src="https://github.com/user-attachments/assets/66a4f036-5be9-46d9-a49f-1f63bd164d97" />
+
+
 ```
 
 http://localhost:3000/api/checkout
@@ -416,19 +435,35 @@ http://localhost:3000/api/admin/financial-report
 
 ```
 
-<img width="1444" height="827" alt="Captura de tela de 2026-07-08 18-02-36" src="https://github.com/user-attachments/assets/0d6de911-6580-420c-824a-f051269e0df8" />
+<img width="1411" height="405" alt="Acesso restrito" src="https://github.com/user-attachments/assets/6f12dc02-874e-4416-91e9-f46bf693873e" />
+
+<img width="1420" height="653" alt="Acesso admin" src="https://github.com/user-attachments/assets/ac037c7e-1af7-46d7-b3b3-989db3ffa1a8" />
+
 
 ```
 
-http://localhost:3000/api/users/1
+http://localhost:3000/api/users/2
 
 ```
-
-<img width="1444" height="827" alt="Captura de tela de 2026-07-08 18-17-14" src="https://github.com/user-attachments/assets/1400c64a-8617-49a7-8483-dffadfd10f26" />
 
 <img width="1480" height="103" alt="Captura de tela de 2026-07-08 18-17-47" src="https://github.com/user-attachments/assets/7cdb5ab6-db5e-4100-87b5-7dc19c539392" />
 
+
+
+<img width="1408" height="383" alt="deletando usuario" src="https://github.com/user-attachments/assets/f793f345-1679-4593-b7c9-33bfef754fd2" />
+
+
+
 #### Projeto 3 — `task-manager-api`
+
+```
+
+http://localhost:5000/reports/summary
+
+```
+
+<img width="1079" height="570" alt="Login task-manager" src="https://github.com/user-attachments/assets/a020b039-88fd-4b62-864e-11bbc7d47726" />
+
 
 ```
 
@@ -445,7 +480,7 @@ http://localhost:5000/categories/create
 
 ```
 
-<img width="1431" height="540" alt="categorias create" src="https://github.com/user-attachments/assets/ffbfbf57-4404-44fb-94f5-795d5397212a" />
+<img width="1410" height="491" alt="image" src="https://github.com/user-attachments/assets/123791f0-b73a-48c2-a76b-f70e83d5608b" />
 
 
 ```
@@ -462,7 +497,8 @@ http://localhost:5000/reports/summary
 
 ```
 
-<img width="1432" height="901" alt="reports summary" src="https://github.com/user-attachments/assets/f66d2893-9f34-42d4-9cc1-4152b281f347" />
+<img width="1405" height="866" alt="summary" src="https://github.com/user-attachments/assets/72e7b855-bc83-43c5-9a2f-7b21590ef56a" />
+
 
 ```
 
