@@ -14,12 +14,13 @@ Arquivos originais: `app.py`, `controllers.py`, `models.py`, `database.py` (~781
 | 2 | **CRITICAL** | `app.py:7–8` | **Credencial hardcoded**: `SECRET_KEY = "minha-chave-super-secreta-123"` e `DEBUG = True` literais no código | A SECRET_KEY assinada em JWT/sessões exposta no histórico git compromete a segurança de todos os usuários de forma irreversível |
 | 3 | **CRITICAL** | `app.py:59–78` | **SQL Injection via endpoint aberto**: `/admin/query` aceita SQL arbitrário do body e executa sem autenticação ou sanitização | Backdoor completo — qualquer cliente HTTP pode executar `DROP TABLE`, `SELECT` em dados sensíveis ou criar usuário admin |
 | 4 | **CRITICAL** | `models.py:105–111` | **SQL Injection na autenticação**: query de login montada por concatenação de strings (`"... WHERE email='" + email + "'"`) | Um atacante pode fazer bypass completo de autenticação com `' OR '1'='1` no campo email |
-| 5 | **HIGH** | `models.py:133–169` | **Fat Model**: validação de estoque, cálculo de total e orquestração de múltiplas entidades (`produtos`, `pedidos`, `itens_pedido`) dentro de funções de Model | Models devem apenas persistir dados; misturar regras de negócio torna impossível reutilizar ou testar a lógica sem banco real |
-| 6 | **HIGH** | `database.py:4–11` | **Global Mutable State**: `db_connection` é variável global compartilhada com `check_same_thread=False` suprimindo a proteção nativa do SQLite | Race conditions silenciosas em ambiente multi-thread; uma conexão global não libera recursos entre requests |
-| 7 | **MEDIUM** | `models.py:186–199` | **N+1 Query**: para cada pedido, uma query busca seus itens; para cada item, outra busca o nome do produto — padrão aninhado em loops | 10 pedidos com 5 itens = 61 queries; degrada linearmente com volume e é inaceitável em produção |
-| 8 | **MEDIUM** | `controllers.py:118–121` | **Input sem validação**: `float(preco_min)` aplicado diretamente na query string sem try/except; `?preco_min=abc` resulta em HTTP 500 com stack trace exposto | Facilita reconhecimento de vulnerabilidades e expõe internos da aplicação para clientes não autorizados |
-| 9 | **LOW** | `models.py:256–259` | **Magic Numbers**: limiares de desconto (`10000`, `5000`, `1000`) e multiplicadores (`0.1`, `0.05`, `0.02`) sem constantes nomeadas | Regra de negócio invisível; mudança de política exige caça manual por valores literais espalhados no código |
-| 10 | **LOW** | `models.py:187,219` | **Poor Naming**: cursores nomeados `cursor2` e `cursor3` sem indicar qual entidade cada um consulta | Dificulta leitura e onboarding; um leitor não sabe sem execução mental qual cursor acessa itens e qual acessa produtos |
+| 5 | **CRITICAL** | `controllers.py:167–186` | **Autenticação inexistente**: `login()` retorna apenas `{"dados": usuario, "sucesso": True, "mensagem": "Login OK"}` — nenhum token, JWT ou identificador de sessão é gerado, e nenhuma rota da aplicação exige ou valida um header `Authorization` | Não existe controle de acesso real: qualquer cliente cria, atualiza ou deleta produtos e pedidos, ou lista usuários, sem nunca ter se autenticado de fato, mesmo após um "login" bem-sucedido |
+| 6 | **HIGH** | `models.py:133–169` | **Fat Model**: validação de estoque, cálculo de total e orquestração de múltiplas entidades (`produtos`, `pedidos`, `itens_pedido`) dentro de funções de Model | Models devem apenas persistir dados; misturar regras de negócio torna impossível reutilizar ou testar a lógica sem banco real |
+| 7 | **HIGH** | `database.py:4–11` | **Global Mutable State**: `db_connection` é variável global compartilhada com `check_same_thread=False` suprimindo a proteção nativa do SQLite | Race conditions silenciosas em ambiente multi-thread; uma conexão global não libera recursos entre requests |
+| 8 | **MEDIUM** | `models.py:186–199` | **N+1 Query**: para cada pedido, uma query busca seus itens; para cada item, outra busca o nome do produto — padrão aninhado em loops | 10 pedidos com 5 itens = 61 queries; degrada linearmente com volume e é inaceitável em produção |
+| 9 | **MEDIUM** | `controllers.py:118–121` | **Input sem validação**: `float(preco_min)` aplicado diretamente na query string sem try/except; `?preco_min=abc` resulta em HTTP 500 com stack trace exposto | Facilita reconhecimento de vulnerabilidades e expõe internos da aplicação para clientes não autorizados |
+| 10 | **LOW** | `models.py:256–259` | **Magic Numbers**: limiares de desconto (`10000`, `5000`, `1000`) e multiplicadores (`0.1`, `0.05`, `0.02`) sem constantes nomeadas | Regra de negócio invisível; mudança de política exige caça manual por valores literais espalhados no código |
+| 11 | **LOW** | `models.py:187,219` | **Poor Naming**: cursores nomeados `cursor2` e `cursor3` sem indicar qual entidade cada um consulta | Dificulta leitura e onboarding; um leitor não sabe sem execução mental qual cursor acessa itens e qual acessa produtos |
 
 ---
 
@@ -31,12 +32,14 @@ Arquivos originais: `src/app.js`, `src/AppManager.js`, `src/utils.js` (~180 linh
 |---|-----------|-----------------|----------|---------------------|
 | 1 | **CRITICAL** | `src/AppManager.js:1–141` | **God Class**: `AppManager` acumula 6+ responsabilidades: inicialização do banco, seed, rotas HTTP, lógica de pagamento, gestão de usuários e logging de auditoria | Impossível testar qualquer camada de forma isolada sem subir banco e servidor HTTP completos |
 | 2 | **CRITICAL** | `src/utils.js:1–7` | **Credenciais hardcoded**: senha de banco de produção (`"senha_super_secreta_prod_123"`) e chave live de gateway de pagamento (`"pk_live_1234567890abcdef"`) versionadas no git | Violação direta de PCI-DSS e LGPD; qualquer acesso ao repositório concede acesso pleno às credenciais de produção |
-| 3 | **HIGH** | `src/AppManager.js:28–78` | **Fat Controller — Checkout**: handler HTTP de 50 linhas com validação, busca de curso, criação de usuário, aprovação de pagamento e log de auditoria aninhados em callbacks | Regra de negócio de pagamento (`cc.startsWith("4")`) não pode ser testada sem simular uma requisição HTTP completa |
-| 4 | **HIGH** | `src/AppManager.js:80–129` | **Fat Controller — Relatório**: lógica de agregação financeira (receita por curso, lista de estudantes com valores pagos) embutida no handler HTTP com 49 linhas de callbacks aninhados | Impossível reutilizar a lógica de agregação em outro contexto (job assíncrono, exportação CSV) |
-| 5 | **HIGH** | `src/utils.js:9–10` | **Global Mutable State**: `globalCache` e `totalRevenue` são variáveis mutáveis exportadas no escopo do módulo, compartilhadas entre todas as requisições | Em Node.js single-process, dados de um usuário ficam acessíveis para outros via o mesmo cache sem isolamento |
-| 6 | **MEDIUM** | `src/AppManager.js:89–128` | **N+1 Query**: para N cursos com M matrículas cada, são executadas 1+N+(N×M×2) queries; com 10 cursos e 50 matrículas = ~1001 queries por request | Degrada linearmente com volume; tornando o endpoint de relatório financeiro inutilizável em produção |
-| 7 | **MEDIUM** | `src/AppManager.js:29–35` | **Input sem validação**: validação apenas verifica presença de 4 campos sem validar tipo de `cid` (int), formato de email ou tamanho de `cc` | Criação silenciosa de usuários com senha vazia; campo de cartão aceita qualquer string |
-| 8 | **LOW** | `src/AppManager.js:46` | **Magic String**: `cc.startsWith("4")` para identificar cartão Visa sem constante nomeada; `"PAID"` e `"DENIED"` repetidos sem enum | Regra de negócio de pagamento invisível; mudança de prefixo ou status exige busca manual |
+| 3 | **CRITICAL** | `src/utils.js:17–22` | **Hashing de senha não criptográfico**: `badCrypto()` concatena substrings de base64 em loop de 10.000 iterações — não é um algoritmo de hash real, é trivialmente reversível e nenhuma lib de hashing dedicada é usada | Senhas de usuários criados no checkout (`AppManager.js:66`) ficam protegidas por um "hash" caseiro sem nenhuma garantia criptográfica, equivalente a armazenar a senha quase em claro |
+| 4 | **CRITICAL** | `src/AppManager.js:80,131` | **Rotas administrativas sem autenticação**: `/api/admin/financial-report` e `DELETE /api/users/:id` não verificam header `Authorization`, token ou papel de admin | Qualquer cliente não autenticado lê dados financeiros sensíveis (receita, alunos, valores pagos) ou apaga qualquer usuário apenas conhecendo o ID |
+| 5 | **HIGH** | `src/AppManager.js:28–78` | **Fat Controller — Checkout**: handler HTTP de 50 linhas com validação, busca de curso, criação de usuário, aprovação de pagamento e log de auditoria aninhados em callbacks | Regra de negócio de pagamento (`cc.startsWith("4")`) não pode ser testada sem simular uma requisição HTTP completa |
+| 6 | **HIGH** | `src/AppManager.js:80–129` | **Fat Controller — Relatório**: lógica de agregação financeira (receita por curso, lista de estudantes com valores pagos) embutida no handler HTTP com 49 linhas de callbacks aninhados | Impossível reutilizar a lógica de agregação em outro contexto (job assíncrono, exportação CSV) |
+| 7 | **HIGH** | `src/utils.js:9–10` | **Global Mutable State**: `globalCache` e `totalRevenue` são variáveis mutáveis exportadas no escopo do módulo, compartilhadas entre todas as requisições | Em Node.js single-process, dados de um usuário ficam acessíveis para outros via o mesmo cache sem isolamento |
+| 8 | **MEDIUM** | `src/AppManager.js:89–128` | **N+1 Query**: para N cursos com M matrículas cada, são executadas 1+N+(N×M×2) queries; com 10 cursos e 50 matrículas = ~1001 queries por request | Degrada linearmente com volume; tornando o endpoint de relatório financeiro inutilizável em produção |
+| 9 | **MEDIUM** | `src/AppManager.js:29–35` | **Input sem validação**: validação apenas verifica presença de 4 campos sem validar tipo de `cid` (int), formato de email ou tamanho de `cc` | Criação silenciosa de usuários com senha vazia; campo de cartão aceita qualquer string |
+| 10 | **LOW** | `src/AppManager.js:46` | **Magic String**: `cc.startsWith("4")` para identificar cartão Visa sem constante nomeada; `"PAID"` e `"DENIED"` repetidos sem enum | Regra de negócio de pagamento invisível; mudança de prefixo ou status exige busca manual |
 
 ---
 
@@ -49,13 +52,14 @@ Arquivos originais: `app.py`, `database.py`, `models/`, `routes/` (5 arquivos de
 | 1 | **CRITICAL** | `routes/task_routes.py:1–300` | **God Route File**: arquivo de 300 linhas com 5 responsabilidades distintas — roteamento HTTP, acesso direto ao ORM (`Task.query`), validação de entrada, lógica de negócio (cálculo de overdue) e serialização manual | Violação de SRP; impossível testar a lógica de overdue sem simular uma request HTTP |
 | 2 | **CRITICAL** | `app.py:11–13` | **Credenciais hardcoded**: `SECRET_KEY = 'super-secret-key-123'` e `SQLALCHEMY_DATABASE_URI` literais no código-fonte | Exposição de chave de sessão no histórico git; se vazada, permite forjar qualquer sessão da aplicação |
 | 3 | **CRITICAL** | `services/notification_service.py:7–10` | **Credenciais hardcoded**: `email_password = 'senha123'` e `email_user = 'taskmanager@gmail.com'` hardcoded no construtor do serviço | Credenciais SMTP de produção versionadas; qualquer acesso ao repositório permite usar a conta de email da aplicação |
-| 4 | **CRITICAL** | `routes/user_routes.py:207–210` | **Token fake previsível**: `'fake-jwt-token-' + str(user.id)` como resposta de login; `user.to_dict()` inclui o hash MD5 da senha na resposta | Token trivialmente forjável; hash MD5 exposto facilita ataques de dicionário offline |
-| 5 | **HIGH** | `routes/task_routes.py:12–63` | **Fat Route**: função `get_tasks()` de 51 linhas com cálculo de overdue, resolução de relacionamentos, serialização manual e condicionais aninhadas em 3 níveis — ignorando `Task.is_overdue()` e `Task.to_dict()` já existentes no model | Lógica de overdue duplicada em 6 pontos da codebase; mudança na definição exige editar 6 arquivos |
-| 6 | **HIGH** | `routes/report_routes.py:12–101` | **Fat Route — Relatório**: função de 90 linhas calculando produtividade por usuário, contando overdue e agregando estatísticas dentro do handler HTTP | Impossível reutilizar ou testar a lógica de relatório sem simular uma request |
-| 7 | **MEDIUM** | `routes/task_routes.py:41–57` | **N+1 Query**: para cada task, uma query busca `User` e outra busca `Category` — ignorando os relacionamentos ORM com `joinedload` disponíveis | Com 100 tasks = 201 queries por request; os relacionamentos já estão definidos no ORM e apenas precisam de eager loading |
-| 8 | **MEDIUM** | `routes/task_routes.py`, `routes/user_routes.py`, `routes/report_routes.py` | **Código duplicado**: bloco de lógica de overdue copiado em 6 pontos; serialização manual de Task em 3 arquivos ignorando `Task.to_dict()` existente | Correção de bug em um ponto não propaga para os outros; campos diferem entre cópias, criando inconsistência silenciosa |
-| 9 | **MEDIUM** | `routes/task_routes.py`, `routes/user_routes.py`, `routes/report_routes.py` | **API deprecated**: `Model.query.get(pk)` usado em 8 locais — deprecated no SQLAlchemy 2.x com `LegacyAPIWarning` em runtime | Bloqueia upgrade do Flask-SQLAlchemy; emite warnings em produção; será removido em versão futura |
-| 10 | **LOW** | `routes/report_routes.py:24–28` | **Poor Naming**: variáveis `p1`, `p2`, `p3`, `p4`, `p5` para contagens de prioridade sem nome descritivo | Leitor não sabe que `p1` significa "contagem de tasks com prioridade crítica" sem ler todo o contexto circundante |
+| 4 | **CRITICAL** | `routes/user_routes.py:207–210` | **Token fake previsível**: `'fake-jwt-token-' + str(user.id)` como resposta de login | Token trivialmente forjável — qualquer cliente calcula o token de qualquer usuário apenas sabendo seu ID, sem nunca ter se autenticado de fato |
+| 5 | **CRITICAL** | `models/user.py:27–32` | **Hashing de senha reversível/fraco**: `set_password`/`check_password` usam `hashlib.md5` sem salt, e o hash resultante ainda é incluído em `user.to_dict()` retornado pela API | Um vazamento do banco (ou a própria resposta da API, que já expõe o hash) compromete a senha na prática — MD5 é quebrado por rainbow tables e força bruta em GPU em minutos |
+| 6 | **HIGH** | `routes/task_routes.py:12–63` | **Fat Route**: função `get_tasks()` de 51 linhas com cálculo de overdue, resolução de relacionamentos, serialização manual e condicionais aninhadas em 3 níveis — ignorando `Task.is_overdue()` e `Task.to_dict()` já existentes no model | Lógica de overdue duplicada em 6 pontos da codebase; mudança na definição exige editar 6 arquivos |
+| 7 | **HIGH** | `routes/report_routes.py:12–101` | **Fat Route — Relatório**: função de 90 linhas calculando produtividade por usuário, contando overdue e agregando estatísticas dentro do handler HTTP | Impossível reutilizar ou testar a lógica de relatório sem simular uma request |
+| 8 | **MEDIUM** | `routes/task_routes.py:41–57` | **N+1 Query**: para cada task, uma query busca `User` e outra busca `Category` — ignorando os relacionamentos ORM com `joinedload` disponíveis | Com 100 tasks = 201 queries por request; os relacionamentos já estão definidos no ORM e apenas precisam de eager loading |
+| 9 | **MEDIUM** | `routes/task_routes.py`, `routes/user_routes.py`, `routes/report_routes.py` | **Código duplicado**: bloco de lógica de overdue copiado em 6 pontos; serialização manual de Task em 3 arquivos ignorando `Task.to_dict()` existente | Correção de bug em um ponto não propaga para os outros; campos diferem entre cópias, criando inconsistência silenciosa |
+| 10 | **MEDIUM** | `routes/task_routes.py`, `routes/user_routes.py`, `routes/report_routes.py` | **API deprecated**: `Model.query.get(pk)` usado em 8 locais — deprecated no SQLAlchemy 2.x com `LegacyAPIWarning` em runtime | Bloqueia upgrade do Flask-SQLAlchemy; emite warnings em produção; será removido em versão futura |
+| 11 | **LOW** | `routes/report_routes.py:24–28` | **Poor Naming**: variáveis `p1`, `p2`, `p3`, `p4`, `p5` para contagens de prioridade sem nome descritivo | Leitor não sabe que `p1` significa "contagem de tasks com prioridade crítica" sem ler todo o contexto circundante |
 
 ---
 
@@ -75,10 +79,10 @@ Os cinco arquivos de referência têm responsabilidades únicas e não se sobrep
 | Arquivo | Propósito na skill |
 |---------|-------------------|
 | `project-analysis.md` | Heurísticas de detecção de stack (linguagem, framework, banco, arquitetura, domínio) |
-| `antipatterns-catalog.md` | 12 anti-patterns com IDs (AP-01…AP-12), sinais de detecção agnósticos e exemplos em 4 stacks |
+| `antipatterns-catalog.md` | 14 anti-patterns com IDs (AP-01…AP-14), sinais de detecção agnósticos e exemplos em 4 stacks |
 | `template_audit_report.md` | Formato exato do relatório: cabeçalho, executive summary, bloco por finding (severidade, arquivo, linhas, trecho, problema, ação) |
 | `architecture_guidelines.md` | Estrutura de diretórios MVC alvo, responsabilidades de cada camada, checklist pós-refatoração |
-| `refactoring-playbook.md` | 11 padrões de transformação (PT-01…PT-11) com código ANTES/DEPOIS e ordem de aplicação recomendada |
+| `refactoring-playbook.md` | 13 padrões de transformação (PT-01…PT-13) com código ANTES/DEPOIS e ordem de aplicação recomendada |
 
 ### Anti-patterns incluídos no catálogo e justificativas
 
@@ -96,6 +100,8 @@ Os cinco arquivos de referência têm responsabilidades únicas e não se sobrep
 | AP-10 | Magic Numbers and Strings | LOW | Dívida técnica acumulada; presente nos 3 projetos |
 | AP-11 | Poor Naming | LOW | Onboarding lento e erros por má interpretação; presente nos 3 projetos |
 | AP-12 | Deprecated API Usage | MEDIUM | Bloqueia upgrades; detectado no projeto 3 (SQLAlchemy `Model.query.get()`) |
+| AP-13 | Weak / Reversible Password Hashing | CRITICAL | Adicionado após revisão dos 3 projetos: senhas protegidas com MD5/SHA sem salt (hash rápido, não projetado para senha); presente nos projetos 2 e 3 |
+| AP-14 | Fake or Predictable Authentication Token | CRITICAL | Adicionado após revisão dos 3 projetos: login retorna token previsível (`'fake-jwt-token-' + id`, `f'placeholder-{id}'`) sem assinatura nem verificação nas rotas; presente nos 3 projetos |
 
 ### Como a skill garante agnósticidade de tecnologia
 
@@ -125,6 +131,9 @@ O `task-manager-api` já tinha `models/`, `routes/`, `services/` e `utils/`, mas
 **Desafio 4 — Relatório com findings exatos por arquivo e linha**
 A Fase 2 inicialmente gerava findings com descrições genéricas. Solução: o `template_audit_report.md` exige campos obrigatórios (`File`, `Lines`, trecho de código de até 10 linhas, `Problem`, `Action`) e proíbe a criação de findings sem evidência de código — forçando o agente a ler os arquivos antes de reportar.
 
+**Desafio 5 — Vulnerabilidades de autenticação não cobertas pelo catálogo inicial**
+Os 12 anti-patterns originais não capturavam dois problemas de segurança presentes nos 3 projetos: senhas hasheadas com algoritmo rápido sem salt (MD5/SHA puro) e tokens de login fake/previsíveis (`f'placeholder-{id}'`, `'fake-jwt-token-' + id`) aceitos sem qualquer verificação nas rotas. Solução: o catálogo foi estendido com `AP-13 — Weak / Reversible Password Hashing` e `AP-14 — Fake or Predictable Authentication Token` (ambos CRITICAL), e o `refactoring-playbook.md` ganhou os padrões correspondentes `PT-12` e `PT-13`. Os três relatórios de auditoria em `reports/` foram reexecutados/atualizados para incluir os novos findings.
+
 ---
 
 ## C) Resultados
@@ -134,7 +143,7 @@ A Fase 2 inicialmente gerava findings com descrições genéricas. Solução: o 
 | Projeto | Stack | Arquivos analisados | CRITICAL | HIGH | MEDIUM | LOW | Total |
 |---------|-------|---------------------|----------|------|--------|-----|-------|
 | `code-smells-project` | Python/Flask 3.1.1 | 4 (~781 linhas) | 8 | 5 | 6 | 4 | **23** |
-| `ecommerce-api-legacy` | Node.js/Express 4.18.2 | 7 (~180 linhas) | 2 | 4 | 3 | 2 | **11** |
+| `ecommerce-api-legacy` | Node.js/Express 4.18.2 | 7 (~180 linhas) | 7 | 4 | 3 | 2 | **16** |
 | `task-manager-api` | Python/Flask 3.0.0 | 15 (~1161 linhas) | 5 | 3 | 7 | 2 | **17** |
 
 ### Comparação antes/depois
@@ -159,7 +168,7 @@ code-smells-project/
 │   └── connection.py                # conexão escopada por request via Flask g
 ├── models/
 │   ├── produto.py                   # queries parametrizadas, serialização centralizada
-│   ├── usuario.py
+│   ├── usuario.py                   # senha protegida com bcrypt (hashpw/checkpw), nunca plaintext
 │   └── pedido.py
 ├── controllers/
 │   ├── produto_controller.py        # lógica de negócio isolada, sem HTTP
@@ -173,7 +182,8 @@ code-smells-project/
 │   ├── usuario_routes.py
 │   ├── pedido_routes.py
 │   ├── relatorio_routes.py
-│   ├── auth_routes.py
+│   ├── auth_routes.py               # /login emite JWT real (PyJWT) via usuario_controller
+│   ├── auth_middleware.py           # decorator que valida o header Authorization nas rotas protegidas
 │   └── health_routes.py
 └── services/
     └── notification_service.py      # side-effects isolados
@@ -197,7 +207,7 @@ ecommerce-api-legacy/src/
 ├── database/
 │   └── connection.js                # instância SQLite injetável
 ├── models/
-│   ├── userModel.js
+│   ├── userModel.js                 # senha protegida com bcrypt.hash/compare, sem badCrypto
 │   ├── courseModel.js
 │   ├── enrollmentModel.js
 │   ├── paymentModel.js
@@ -207,11 +217,17 @@ ecommerce-api-legacy/src/
 │   ├── checkoutController.js        # lógica de pagamento isolada
 │   ├── reportController.js
 │   ├── userController.js
+│   ├── authController.js            # login emite JWT real via jsonwebtoken
 │   └── constants.js                 # VISA_PREFIX, PAYMENT_STATUS enum
+├── services/
+│   └── tokenService.js              # geração/verificação do JWT (sign/verify)
+├── middleware/
+│   └── authMiddleware.js            # valida Authorization e protege /admin/financial-report e DELETE /users/:id
 └── routes/
     ├── checkoutRoutes.js
     ├── reportRoutes.js
     ├── userRoutes.js
+    ├── authRoutes.js
     └── healthRoutes.js
 ```
 
@@ -238,9 +254,10 @@ task-manager-api/
 ├── config.py             # os.environ.get() para SECRET_KEY, DATABASE_URI
 ├── database.py
 ├── models/               # mantidos; to_dict() e is_overdue() centralizados e usados
+│                         # User.set_password/check_password migrados de md5 para werkzeug.security
 ├── controllers/          # nova camada — lógica extraída das rotas
 │   ├── task_controller.py
-│   ├── user_controller.py
+│   ├── user_controller.py           # login emite JWT real (PyJWT) em vez de 'fake-jwt-token-<id>'
 │   ├── category_controller.py
 │   ├── report_controller.py
 │   └── exceptions.py
@@ -252,7 +269,8 @@ task-manager-api/
 │   └── health_routes.py
 ├── services/             # NotificationService com injeção de config SMTP
 └── utils/
-    └── helpers.py        # constantes agora importadas e usadas nas rotas
+    ├── helpers.py        # constantes agora importadas e usadas nas rotas
+    └── auth.py           # decorator que valida o JWT e protege as rotas exigidas
 ```
 
 ### Checklists de validação
@@ -269,8 +287,9 @@ task-manager-api/
 - [x] Relatório segue o template definido nos arquivos de referência
 - [x] Cada finding tem arquivo e linhas exatos
 - [x] Findings ordenados por severidade (CRITICAL → LOW)
-- [x] Mínimo de 5 findings identificados (22 encontrados)
+- [x] Mínimo de 5 findings identificados (23 encontrados)
 - [x] Detecção de APIs deprecated incluída (não aplicável neste projeto)
+- [x] Detecção de token fake incluída (AP-14: `/login` não emite token nem exige `Authorization` em nenhuma rota); hashing de senha não aplicável (senhas em plaintext, já coberto por AP-02b)
 - [x] Skill pausa e pede confirmação antes da Fase 3
 
 **Fase 3 — Refatoração**
@@ -281,6 +300,8 @@ task-manager-api/
 - [x] Controllers concentram o fluxo da aplicação
 - [x] Error handling centralizado nas rotas
 - [x] Entry point limpo (`app.py` registra blueprints apenas)
+- [x] Senha de usuário hasheada com `bcrypt` (`models/usuario.py`), plaintext removido do seed (AP-13 corrigido)
+- [x] `/login` emite JWT assinado e expirável (`PyJWT`); `auth_middleware.py` valida `Authorization` nas rotas protegidas (AP-14 corrigido)
 - [x] Aplicação inicia sem erros
 - [x] Endpoints originais respondem corretamente
 
@@ -296,8 +317,9 @@ task-manager-api/
 - [x] Relatório segue o template definido nos arquivos de referência
 - [x] Cada finding tem arquivo e linhas exatos
 - [x] Findings ordenados por severidade (CRITICAL → LOW)
-- [x] Mínimo de 5 findings identificados (11 encontrados)
+- [x] Mínimo de 5 findings identificados (16 encontrados)
 - [x] Detecção de APIs deprecated incluída (não aplicável neste projeto)
+- [x] Detecção de hashing fraco de senha e token fake incluída (AP-13: SHA-256 sem salt em `userModel.js` e no seed; AP-14: `financial-report` e `DELETE /users/:id` sem verificação de token)
 - [x] Skill pausa e pede confirmação antes da Fase 3
 
 **Fase 3 — Refatoração**
@@ -308,6 +330,8 @@ task-manager-api/
 - [x] Controllers concentram a lógica de negócio
 - [x] Error handling centralizado
 - [x] Entry point limpo (`app.js` registra rotas apenas)
+- [x] `badCrypto()` removido; senha hasheada com `bcrypt.hash`/`bcrypt.compare` em `userModel.js` (AP-13 corrigido)
+- [x] `authController.js`/`tokenService.js` emitem JWT real (`jsonwebtoken`); `authMiddleware.js` protege `/admin/financial-report` e `DELETE /users/:id` (AP-14 corrigido)
 - [x] Aplicação inicia sem erros
 - [x] Endpoints originais respondem corretamente
 
@@ -323,8 +347,9 @@ task-manager-api/
 - [x] Relatório segue o template definido nos arquivos de referência
 - [x] Cada finding tem arquivo e linhas exatos
 - [x] Findings ordenados por severidade (CRITICAL → LOW)
-- [x] Mínimo de 5 findings identificados (16 encontrados)
+- [x] Mínimo de 5 findings identificados (17 encontrados)
 - [x] Detecção de APIs deprecated incluída (AP-12: `Model.query.get()` em 8 locais)
+- [x] Detecção de hashing fraco de senha e token fake incluída (AP-13: `User.set_password`/`check_password` com MD5; AP-14: login retorna `f'placeholder-{user.id}'`)
 - [x] Skill pausa e pede confirmação antes da Fase 3
 
 **Fase 3 — Refatoração**
@@ -335,6 +360,8 @@ task-manager-api/
 - [x] Controllers concentram lógica de negócio extraída das rotas
 - [x] Error handling centralizado com `controllers/exceptions.py`
 - [x] Entry point limpo
+- [x] `User.set_password`/`check_password` migrados de `hashlib.md5` para `werkzeug.security` (AP-13 corrigido)
+- [x] Login emite JWT real (`pyjwt`) em vez de `'fake-jwt-token-' + id`; `utils/auth.py` valida o token nas rotas protegidas (AP-14 corrigido)
 - [x] Aplicação inicia sem erros
 - [x] Endpoints originais respondem corretamente
 
