@@ -15,11 +15,11 @@ This report presents the findings of a static architecture review of the `ecomme
 
 | Severity | Count | Status |
 |:---|:---:|:---|
-| 🔴 CRITICAL | 2 | Open |
+| 🔴 CRITICAL | 7 | Open |
 | 🟠 HIGH | 4 | Open |
 | 🟡 MEDIUM | 3 | Open |
 | 🟢 LOW | 2 | Open |
-| **Total** | **11** | |
+| **Total** | **16** | |
 
 ---
 
@@ -112,6 +112,119 @@ acesse a conta assim que existir um endpoint de login.
 Tornar a senha obrigatória no payload de checkout (rejeitar com 400 se ausente) ou, caso se deseje permitir onboarding sem senha, gerar uma senha aleatória forte por usuário (ex: `crypto.randomBytes(16).toString('hex')`) e comunicá-la por canal seguro — nunca usar constante fixa.
 
 ---
+
+### 🔴 `AP-13` — Weak / Reversible Password Hashing
+
+| | |
+|---|---|
+| **File** | `src/models/userModel.js` |
+| **Lines** | 9-15 |
+
+
+```js
+async create({ name, email, password }) {
+    const passHash = crypto.createHash('sha256').update(password).digest('hex');
+    const result = await dbRun(
+        'INSERT INTO users (name, email, pass) VALUES (?, ?, ?)',
+        [name, email, passHash]
+    );
+    return result.lastID;
+},
+```
+
+**Problem**
+
+Senhas são protegidas com SHA-256 puro e sem salt, um hash rápido projetado para performance, não para resistência a força bruta. Um vazamento da tabela `users` permite recuperar a maioria das senhas em minutos com GPU/rainbow tables. Não há biblioteca de hashing de senha (`bcrypt`, `argon2`, `scrypt`) entre as dependências do projeto.
+
+**Recommended Action**
+
+Substituir por `bcrypt.hash(password, 12)` na criação e `bcrypt.compare(password, hash)` na verificação, adicionando `bcrypt` (ou `argon2`) ao `package.json`. Corresponde ao padrão PT-12 do playbook de refatoração.
+
+---
+
+### 🔴 `AP-13` — Weak / Reversible Password Hashing
+
+| | |
+|---|---|
+| **File** | `src/database/connection.js` |
+| **Lines** | 63-65 |
+
+```js
+const seedPassHash = crypto.createHash('sha256').update('123').digest('hex');
+await dbRun(`INSERT INTO users (name, email, pass) VALUES (?, ?, ?)`,
+    ['Leonan', 'leonan@fullcycle.com.br', seedPassHash]);
+```
+
+**Problem**
+
+O seed de inicialização do banco replica o mesmo hashing fraco (SHA-256 sem salt) usado em produção, além de usar a senha trivial '123'. Como o banco é recriado do zero a cada boot (`:memory:`), esse caminho roda sempre que a aplicação sobe, tornando o algoritmo fraco
+parte do fluxo padrão de dados, não uma exceção isolada de teste.
+
+**Recommended Action**
+Reutilizar a mesma função de hashing segura de `userModel.js` (bcrypt/argon2) para gerar o hash do usuário seed, eliminando a duplicação do algoritmo fraco.
+
+---
+
+### 🔴 `AP-14` — Fake or Predictable Authentication Token
+
+| | |
+|---|---|
+| **File** | `src/routes/reportRoutes.js` |
+| **Lines** | 6-13 |
+
+
+```js
+router.get('/admin/financial-report', async (req, res) => {
+    try {
+        const report = await ReportController.getFinancialReport();
+        return res.status(200).json(report);
+    } catch (err) {
+        return res.status(500).json({ error: 'Erro ao gerar relatório financeiro' });
+    }
+});
+```
+
+**Problem**
+
+A rota `/api/admin/financial-report` expõe dados financeiros sensíveis (receita por curso, nomes de alunos, valores pagos) sem qualquer verificação de header `Authorization`, token ou papel de administrador. Qualquer cliente não autenticado acessa o relatório completo.
+
+**Recommended Action**
+
+Implementar autenticação real (login com JWT assinado e expirável — padrão PT-13 do playbook) e proteger esta rota com um middleware que valide o token e exija o papel de admin, retornando 401/403 quando ausente ou inválido.
+
+---
+
+### 🔴 `AP-14` — Fake or Predictable Authentication Token
+
+| | |
+|---|---|
+| **File** | `src/routes/userRoutes.js` |
+| **Lines** | 6-18 |
+
+
+```js
+router.delete('/users/:userId', async (req, res) => {
+    const userId = parseInt(req.params.userId, 10);
+    if (isNaN(userId) || userId <= 0) {
+        return res.status(400).json({ error: 'userId deve ser um número inteiro positivo' });
+    }
+
+    try {
+        const result = await UserController.deleteUser(userId);
+        return res.status(200).json({ msg: 'Usuário deletado', deleted: result.deleted });
+    } catch (err) {
+        return res.status(500).json({ error: 'Erro ao deletar usuário' });
+    }
+});
+```
+
+**Problem**
+
+A rota `DELETE /api/users/:userId` permite que qualquer requisição não autenticada apague qualquer usuário do sistema apenas conhecendo (ou incrementando) o ID — não há verificação de token, sessão ou propriedade do recurso. Não existe sequer um endpoint de login
+no projeto, então nenhuma rota administrativa está protegida.
+
+**Recommended Action**
+
 
  ### 🟠 `AP-04a` — Fat Controller — Checkout
 
@@ -374,118 +487,6 @@ Variáveis de letra única (`u`, `e`, `p`) e abreviações opacas (`cid`, `cc`) 
 Renomear para: `userName`, `email`, `password`, `courseId`, `cardNumber`. Dividir `processPaymentAndEnroll` em `processPayment` e `createEnrollment`. Renomear `AppManager` para o módulo que realmente representa após a extração de camadas.
 
 ---
-
-### 🔴 `AP-13` — Weak / Reversible Password Hashing
-
-| | |
-|---|---|
-| **File** | `src/models/userModel.js` |
-| **Lines** | 9-15 |
-
-
-```js
-async create({ name, email, password }) {
-    const passHash = crypto.createHash('sha256').update(password).digest('hex');
-    const result = await dbRun(
-        'INSERT INTO users (name, email, pass) VALUES (?, ?, ?)',
-        [name, email, passHash]
-    );
-    return result.lastID;
-},
-```
-
-**Problem**
-
-Senhas são protegidas com SHA-256 puro e sem salt, um hash rápido projetado para performance, não para resistência a força bruta. Um vazamento da tabela `users` permite recuperar a maioria das senhas em minutos com GPU/rainbow tables. Não há biblioteca de hashing de senha (`bcrypt`, `argon2`, `scrypt`) entre as dependências do projeto.
-
-**Recommended Action**
-
-Substituir por `bcrypt.hash(password, 12)` na criação e `bcrypt.compare(password, hash)` na verificação, adicionando `bcrypt` (ou `argon2`) ao `package.json`. Corresponde ao padrão PT-12 do playbook de refatoração.
-
----
-
-### 🔴 `AP-13` — Weak / Reversible Password Hashing
-
-| | |
-|---|---|
-| **File** | `src/database/connection.js` |
-| **Lines** | 63-65 |
-
-```js
-const seedPassHash = crypto.createHash('sha256').update('123').digest('hex');
-await dbRun(`INSERT INTO users (name, email, pass) VALUES (?, ?, ?)`,
-    ['Leonan', 'leonan@fullcycle.com.br', seedPassHash]);
-```
-
-**Problem**
-
-O seed de inicialização do banco replica o mesmo hashing fraco (SHA-256 sem salt) usado em produção, além de usar a senha trivial '123'. Como o banco é recriado do zero a cada boot (`:memory:`), esse caminho roda sempre que a aplicação sobe, tornando o algoritmo fraco
-parte do fluxo padrão de dados, não uma exceção isolada de teste.
-
-**Recommended Action**
-Reutilizar a mesma função de hashing segura de `userModel.js` (bcrypt/argon2) para gerar o hash do usuário seed, eliminando a duplicação do algoritmo fraco.
-
----
-
-### 🔴 `AP-14` — Fake or Predictable Authentication Token
-
-| | |
-|---|---|
-| **File** | `src/routes/reportRoutes.js` |
-| **Lines** | 6-13 |
-
-
-```js
-router.get('/admin/financial-report', async (req, res) => {
-    try {
-        const report = await ReportController.getFinancialReport();
-        return res.status(200).json(report);
-    } catch (err) {
-        return res.status(500).json({ error: 'Erro ao gerar relatório financeiro' });
-    }
-});
-```
-
-**Problem**
-
-A rota `/api/admin/financial-report` expõe dados financeiros sensíveis (receita por curso, nomes de alunos, valores pagos) sem qualquer verificação de header `Authorization`, token ou papel de administrador. Qualquer cliente não autenticado acessa o relatório completo.
-
-**Recommended Action**
-
-Implementar autenticação real (login com JWT assinado e expirável — padrão PT-13 do playbook) e proteger esta rota com um middleware que valide o token e exija o papel de admin, retornando 401/403 quando ausente ou inválido.
-
----
-
-### 🔴 `AP-14` — Fake or Predictable Authentication Token
-
-| | |
-|---|---|
-| **File** | `src/routes/userRoutes.js` |
-| **Lines** | 6-18 |
-
-
-```js
-router.delete('/users/:userId', async (req, res) => {
-    const userId = parseInt(req.params.userId, 10);
-    if (isNaN(userId) || userId <= 0) {
-        return res.status(400).json({ error: 'userId deve ser um número inteiro positivo' });
-    }
-
-    try {
-        const result = await UserController.deleteUser(userId);
-        return res.status(200).json({ msg: 'Usuário deletado', deleted: result.deleted });
-    } catch (err) {
-        return res.status(500).json({ error: 'Erro ao deletar usuário' });
-    }
-});
-```
-
-**Problem**
-
-A rota `DELETE /api/users/:userId` permite que qualquer requisição não autenticada apague qualquer usuário do sistema apenas conhecendo (ou incrementando) o ID — não há verificação de token, sessão ou propriedade do recurso. Não existe sequer um endpoint de login
-no projeto, então nenhuma rota administrativa está protegida.
-
-**Recommended Action**
 
 Adicionar autenticação (JWT — PT-13) e um middleware de autorização que confirme que
 o solicitante é o dono da conta ou um admin antes de permitir a exclusão; rejeitar com 401 sem
